@@ -17,8 +17,8 @@
 set -euo pipefail
 
 # ── colour helpers ────────────────────────────────────────────────────────────
-RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
-CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
+RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'
+CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; RESET=$'\033[0m'
 ok()   { printf "${GREEN}✔  %s${RESET}\n" "$*"; }
 fail() { printf "${RED}✘  %s${RESET}\n" "$*"; }
 warn() { printf "${YELLOW}⚠  %s${RESET}\n" "$*"; }
