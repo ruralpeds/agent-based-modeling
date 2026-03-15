@@ -33,18 +33,18 @@ pub fn write_patient_soa(patients: &[PatientAgent], buf: &mut [f32]) -> usize {
         return 0;
     }
     for (i, p) in patients.iter().enumerate() {
-        buf[ 0 * n + i] = p.room_id             as f32;
-        buf[ 1 * n + i] = p.unit                as u8 as f32;
-        buf[ 2 * n + i] = p.disease_state       as usize as f32;
-        buf[ 3 * n + i] = p.age                 as f32;
-        buf[ 4 * n + i] = p.wbc;
-        buf[ 5 * n + i] = p.temperature;
-        buf[ 6 * n + i] = p.drug_conc;
-        buf[ 7 * n + i] = p.resistance_profile  as u8 as f32;
-        buf[ 8 * n + i] = p.antibiotic_days      as f32;
-        buf[ 9 * n + i] = p.admission_severity;
-        buf[10 * n + i] = p.treatment_action()  as u8 as f32;
-        buf[11 * n + i] = p.id                  as f32;
+        buf[i]              = p.room_id             as f32;
+        buf[n      + i]     = p.unit                as u8 as f32;
+        buf[2  * n + i]     = p.disease_state       as usize as f32;
+        buf[3  * n + i]     = p.age                 as f32;
+        buf[4  * n + i]     = p.wbc;
+        buf[5  * n + i]     = p.temperature;
+        buf[6  * n + i]     = p.drug_conc;
+        buf[7  * n + i]     = p.resistance_profile  as u8 as f32;
+        buf[8  * n + i]     = p.antibiotic_days      as f32;
+        buf[9  * n + i]     = p.admission_severity;
+        buf[10 * n + i]     = p.treatment_action()  as u8 as f32;
+        buf[11 * n + i]     = p.id                  as f32;
     }
     n * FIELDS_PER_PATIENT
 }
@@ -55,8 +55,8 @@ pub fn write_nurse_summary(nurses: &[crate::agents::nurse_agent::NurseAgent], bu
     let n = nurses.len();
     if n == 0 || buf.len() < n * 4 { return 0; }
     for (i, nurse) in nurses.iter().enumerate() {
-        buf[0 * n + i] = nurse.base_compliance;
-        buf[1 * n + i] = nurse.workload;
+        buf[i]         = nurse.base_compliance;
+        buf[n     + i] = nurse.workload;
         buf[2 * n + i] = nurse.fatigue;
         buf[3 * n + i] = nurse.n_patients as f32;
     }
@@ -72,8 +72,8 @@ pub fn write_physician_summary(
     let n = physicians.len();
     if n == 0 || buf.len() < n * 3 { return 0; }
     for (i, phys) in physicians.iter().enumerate() {
-        buf[0 * n + i] = phys.social.current_compliance;
-        buf[1 * n + i] = phys.pbdi.map_state() as usize as f32;
+        buf[i]         = phys.social.current_compliance;
+        buf[n     + i] = phys.pbdi.map_state() as usize as f32;
         buf[2 * n + i] = phys.n_patients as f32;
     }
     n * 3
