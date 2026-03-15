@@ -6,7 +6,12 @@ const crossOriginHeaders = {
   'Cross-Origin-Embedder-Policy': 'require-corp',
 };
 
+// Allow the deploy workflow to override the base for GitHub Pages.
+// Default '/' works for local dev, Vite preview, and CI test builds.
+const base = process.env.BASE_URL ?? '/';
+
 export default defineConfig({
+  base,
   plugins: [wasmPlugin()],
   resolve: { alias: { '@': '/src' } },
   server: {
