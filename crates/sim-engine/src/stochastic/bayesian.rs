@@ -4,7 +4,6 @@
 ///
 /// Evidence-based sensitivity/specificity values are from published HAI
 /// diagnostic studies (referenced inline).
-
 // ─── Clinical observations ────────────────────────────────────────────────────
 
 /// Binary clinical signs that trigger a Bayesian belief revision.

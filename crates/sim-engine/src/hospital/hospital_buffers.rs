@@ -21,7 +21,6 @@
 ///   [0] patient_count  (Atomics.load)
 ///   [1] tick           (Atomics.load)
 use crate::agents::patient_agent::PatientAgent;
-use crate::decision_rules::pbdi::PhysicianPBDI;
 use super::hospital_params::FIELDS_PER_PATIENT;
 
 /// Write all patients in SoA order to `buf`.
