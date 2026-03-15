@@ -1,6 +1,7 @@
 # Rust / WASM build output
 target/
 pkg/
+public/pkg/
 Cargo.lock
 
 # JS build output

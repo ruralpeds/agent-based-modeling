@@ -12,6 +12,30 @@
 </head>
 <body>
   <div id="app"></div>
+
+  <!--
+    Register the COI service worker BEFORE the main module so that
+    SharedArrayBuffer is available when simBridge.js runs.
+    On Netlify / local dev the COOP/COEP headers come from the server;
+    on GitHub Pages the service worker provides them instead.
+  -->
+  <script>
+    if ('serviceWorker' in navigator && !crossOriginIsolated) {
+      navigator.serviceWorker.register('./coi-serviceworker.js').then(function (reg) {
+        // First install: controller not yet active — reload to apply headers.
+        if (!navigator.serviceWorker.controller) {
+          reg.addEventListener('updatefound', function () {
+            reg.installing.addEventListener('statechange', function () {
+              if (this.state === 'activated') window.location.reload();
+            });
+          });
+        }
+      }).catch(function (err) {
+        console.warn('[coi-sw] registration failed:', err);
+      });
+    }
+  </script>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -8,3 +8,4 @@ mod poisson_tests;
 mod stats_tests;
 mod spatial_tests;
 mod agents_tests;
+mod hospital_tests;

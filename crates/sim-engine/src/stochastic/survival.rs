@@ -16,7 +16,7 @@ pub struct CoxCovariates {
 }
 
 /// Coefficients for the Cox PH model (calibrated from HCUP NIS data).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct CoxParams {
     pub age_coef:       f32,  // per year above 65
     pub cci_coef:       f32,  // per CCI point

@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Build WASM (run whenever Rust changes):
-wasm-pack build crates/sim-engine --target web --out-dir pkg --release
+wasm-pack build crates/sim-engine --target web --out-dir public/pkg --release
 
 # Full build (Rust → WASM → Vite bundle):
 pnpm build

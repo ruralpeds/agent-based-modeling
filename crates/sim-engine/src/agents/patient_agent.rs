@@ -3,7 +3,7 @@
 use crate::rng::Mulberry32;
 use crate::stochastic::dtmc::DiseaseState;
 use crate::stochastic::survival::{SurvivalDistribution, CoxCovariates, CoxParams, cox_hazard_ratio};
-use super::types::{Sex, HospitalUnit, ResistanceProfile};
+use super::types::{Sex, HospitalUnit, ResistanceProfile, TreatmentAction};
 
 // ─── PatientAgent ─────────────────────────────────────────────────────────────
 
@@ -47,6 +47,9 @@ pub struct PatientAgent {
     // Assigned providers
     pub attending_id:     u32,
     pub primary_nurse_id: u32,
+
+    /// Current physician-prescribed treatment action (updated by PhysicianAgent each round).
+    pub current_treatment: TreatmentAction,
 }
 
 impl PatientAgent {
@@ -104,6 +107,7 @@ impl PatientAgent {
             mortality_prob: 0.0,
             attending_id:     0,
             primary_nurse_id: 0,
+            current_treatment: TreatmentAction::Observe,
         }
     }
 
@@ -157,6 +161,9 @@ impl PatientAgent {
 
     /// Antibiotic days as f32 (used in logistic models).
     pub fn antibiotic_days_f32(&self) -> f32 { self.antibiotic_days as f32 }
+
+    /// Current treatment action (for buffer serialisation).
+    pub fn treatment_action(&self) -> TreatmentAction { self.current_treatment }
 }
 
 // ─── PatientParams ────────────────────────────────────────────────────────────

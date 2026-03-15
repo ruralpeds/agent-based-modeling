@@ -6,13 +6,14 @@
 ///
 /// Resistance escalation (Poisson per antibiotic-day):
 ///   P(mutation) = 1 − exp(−mu · antibiotic_days)
+use serde::{Deserialize, Serialize};
 use crate::rng::Mulberry32;
 use super::types::{ResistanceProfile, AntibioticClass};
 
 // ─── PathogenParams ───────────────────────────────────────────────────────────
 
 /// Calibration constants for S. aureus / MRSA-like pathogen (ICU default).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct PathogenParams {
     /// Exponential dose-response rate r (units: 1/CFU-equivalent).
     /// Default 0.05 → P≈0.40 at dose=10.

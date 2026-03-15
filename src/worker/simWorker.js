@@ -23,9 +23,10 @@ self.addEventListener('message', async (event) => {
   sabAgents  = new Float32Array(sab, HEADER_BYTES);
 
   try {
-    // Dynamic import of the wasm-pack generated module
-    // The pkg/ directory is at the project root
-    wasmModule = await import('/pkg/sim_engine.js');
+    // Dynamic import of the wasm-pack generated module.
+    // Uses import.meta.env.BASE_URL so the path is correct on both
+    // localhost (base '/') and GitHub Pages (base '/repo-name/').
+    wasmModule = await import(/* @vite-ignore */ import.meta.env.BASE_URL + 'pkg/sim_engine.js');
     await wasmModule.default();  // initialize WASM
 
     engine = new wasmModule.WasmSimEngine(JSON.stringify(DEFAULT_PARAMS), 42);

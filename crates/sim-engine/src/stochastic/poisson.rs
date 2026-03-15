@@ -40,6 +40,19 @@ impl NhppArrivalProcess {
         }
     }
 
+    /// Emergency department profile with a custom base rate.
+    /// Uses NHAMCS-calibrated hourly/day-of-week factors.
+    pub fn with_base_rate(base_rate_per_hour: f32) -> Self {
+        let hourly: [f32; 24] = [
+            0.35, 0.30, 0.28, 0.25, 0.25, 0.30,
+            0.70, 0.85, 0.95, 1.05, 1.15, 1.20,
+            1.25, 1.30, 1.35, 1.35, 1.30, 1.25,
+            1.15, 1.05, 0.95, 0.85, 0.70, 0.50,
+        ];
+        let day: [f32; 7] = [1.10, 1.05, 1.00, 0.98, 0.95, 0.85, 0.90];
+        Self::new(base_rate_per_hour, hourly, day, 1.0)
+    }
+
     /// Emergency department default profile calibrated to NHAMCS data.
     /// Base rate ≈ 3.2 patients/hour; afternoon peak × 1.35.
     pub fn ed_default() -> Self {

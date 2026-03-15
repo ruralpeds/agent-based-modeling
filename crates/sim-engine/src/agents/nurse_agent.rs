@@ -12,7 +12,7 @@ use super::types::{NurseActivity, ProviderSocialState};
 ///
 /// Calibrated to WHO-5 ICU audit baseline ≈ 65% with workload/fatigue sensitivity
 /// from published observational studies (Pittet et al.; Huis et al.).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct NurseParams {
     pub hh_intercept:        f32,  // β₀: base log-odds → logit(0.65) ≈ 0.62
     pub hh_workload_coef:    f32,  // β₁ < 0: higher workload → lower compliance
