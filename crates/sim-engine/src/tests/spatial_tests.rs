@@ -71,7 +71,10 @@ mod tests {
         grid.build(&agents);
 
         let result = grid.nearest_of_type(10.0, 10.0, 20.0, AgentType::Prey, &agents);
-        assert!(result.is_none(), "predator must not be returned when querying for prey");
+        assert!(
+            result.is_none(),
+            "predator must not be returned when querying for prey"
+        );
     }
 
     #[test]
@@ -138,7 +141,10 @@ mod tests {
         grid.build(&agents);
 
         let result = grid.query_radius(0.0, 0.0, 5.0, &agents);
-        assert!(result.is_empty(), "agent at distance 10 should be outside radius 5");
+        assert!(
+            result.is_empty(),
+            "agent at distance 10 should be outside radius 5"
+        );
     }
 
     #[test]
@@ -152,7 +158,12 @@ mod tests {
         grid.build(&agents);
 
         let result = grid.query_radius(0.0, 0.0, 3.0, &agents);
-        assert_eq!(result.len(), 2, "expected 2 agents within radius 3, got {}", result.len());
+        assert_eq!(
+            result.len(),
+            2,
+            "expected 2 agents within radius 3, got {}",
+            result.len()
+        );
         let ids: Vec<u32> = result.iter().map(|&(_, _, id, _)| id).collect();
         assert!(ids.contains(&0) && ids.contains(&1));
     }
@@ -179,17 +190,18 @@ mod tests {
 
         let result = grid.query_radius(0.0, 0.0, 5.0, &agents);
         // dx*dx+dy*dy = 9+16 = 25 ≤ r*r = 25, so included
-        assert_eq!(result.len(), 1, "agent on exact boundary should be included (≤ r²)");
+        assert_eq!(
+            result.len(),
+            1,
+            "agent on exact boundary should be included (≤ r²)"
+        );
     }
 
     // ── edge cases ────────────────────────────────────────────────────────────
 
     #[test]
     fn agents_at_world_boundary_do_not_panic() {
-        let agents = vec![
-            prey_at(0, 0.0, 0.0),
-            prey_at(1, 79.9, 59.9),
-        ];
+        let agents = vec![prey_at(0, 0.0, 0.0), prey_at(1, 79.9, 59.9)];
         let mut grid = make_grid();
         grid.build(&agents);
         // Should not panic querying near boundaries
@@ -206,6 +218,9 @@ mod tests {
         // Rebuild with empty — prior agents should not appear
         grid.build(&[]);
         let result = grid.query_radius(5.0, 5.0, 10.0, &[]);
-        assert!(result.is_empty(), "stale agents from prior build should be cleared");
+        assert!(
+            result.is_empty(),
+            "stale agents from prior build should be cleared"
+        );
     }
 }

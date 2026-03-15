@@ -1,11 +1,11 @@
-pub mod sim_engine;
 pub mod agent;
-pub mod grid;
 pub mod agent_buffers;
 pub mod event_log;
+pub mod grid;
+pub mod sim_engine;
 
-pub use sim_engine::SimEngine;
-pub use agent::{Agent, AgentType, Action, Intention};
+pub use agent::{Action, Agent, AgentType, Intention};
+pub use event_log::{EventLog, SimEvent};
 pub use grid::Grid;
-pub use event_log::{SimEvent, EventLog};
+pub use sim_engine::SimEngine;
 pub use sim_engine::SimParams;

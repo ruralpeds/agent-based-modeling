@@ -44,10 +44,8 @@ impl NhppArrivalProcess {
     /// Uses NHAMCS-calibrated hourly/day-of-week factors.
     pub fn with_base_rate(base_rate_per_hour: f32) -> Self {
         let hourly: [f32; 24] = [
-            0.35, 0.30, 0.28, 0.25, 0.25, 0.30,
-            0.70, 0.85, 0.95, 1.05, 1.15, 1.20,
-            1.25, 1.30, 1.35, 1.35, 1.30, 1.25,
-            1.15, 1.05, 0.95, 0.85, 0.70, 0.50,
+            0.35, 0.30, 0.28, 0.25, 0.25, 0.30, 0.70, 0.85, 0.95, 1.05, 1.15, 1.20, 1.25, 1.30,
+            1.35, 1.35, 1.30, 1.25, 1.15, 1.05, 0.95, 0.85, 0.70, 0.50,
         ];
         let day: [f32; 7] = [1.10, 1.05, 1.00, 0.98, 0.95, 0.85, 0.90];
         Self::new(base_rate_per_hour, hourly, day, 1.0)
@@ -70,8 +68,8 @@ impl NhppArrivalProcess {
     /// `ticks_per_hour` converts tick index to time-of-day and day-of-week.
     pub fn rate_at(&self, tick: u64, ticks_per_hour: u32) -> f32 {
         let tph = ticks_per_hour as u64;
-        let hour_of_day  = (tick / tph % 24) as usize;
-        let day_of_week  = (tick / (tph * 24) % 7) as usize;
+        let hour_of_day = (tick / tph % 24) as usize;
+        let day_of_week = (tick / (tph * 24) % 7) as usize;
         self.base_rate_per_hour
             * self.hourly_factors[hour_of_day]
             * self.day_factors[day_of_week]
@@ -87,9 +85,9 @@ impl NhppArrivalProcess {
     ///   3. Repeat until accepted.
     pub fn next_arrival_delta(
         &self,
-        current_tick:   u64,
+        current_tick: u64,
         ticks_per_hour: u32,
-        rng:            &mut Mulberry32,
+        rng: &mut Mulberry32,
     ) -> u64 {
         let lambda_max_per_tick = self.lambda_max / ticks_per_hour as f32;
         let mut t = current_tick;

@@ -1,7 +1,7 @@
-use wasm_bindgen::prelude::*;
-use js_sys::Float32Array;
 use crate::engine::sim_engine::{SimEngine, SimParams};
-use crate::hospital::{HospitalSimEngine, HospitalParams};
+use crate::hospital::{HospitalParams, HospitalSimEngine};
+use js_sys::Float32Array;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct WasmSimEngine {
@@ -13,9 +13,11 @@ impl WasmSimEngine {
     #[wasm_bindgen(constructor)]
     pub fn new(params_json: &str, seed: u32) -> Result<WasmSimEngine, JsValue> {
         console_error_panic_hook::set_once();
-        let params: SimParams = serde_json::from_str(params_json)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        Ok(WasmSimEngine { inner: SimEngine::new(params, seed) })
+        let params: SimParams =
+            serde_json::from_str(params_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(WasmSimEngine {
+            inner: SimEngine::new(params, seed),
+        })
     }
 
     /// Advance one tick. Returns agent count.
@@ -33,8 +35,8 @@ impl WasmSimEngine {
     }
 
     pub fn set_params(&mut self, params_json: &str) -> Result<(), JsValue> {
-        let params: SimParams = serde_json::from_str(params_json)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let params: SimParams =
+            serde_json::from_str(params_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
         self.inner.set_params(params);
         Ok(())
     }
@@ -43,10 +45,18 @@ impl WasmSimEngine {
         self.inner.reset(seed);
     }
 
-    pub fn get_tick(&self) -> u32 { self.inner.tick() as u32 }
-    pub fn get_prey_count(&self) -> u32 { self.inner.prey_count() as u32 }
-    pub fn get_pred_count(&self) -> u32 { self.inner.pred_count() as u32 }
-    pub fn get_agent_count(&self) -> u32 { self.inner.agent_count() as u32 }
+    pub fn get_tick(&self) -> u32 {
+        self.inner.tick() as u32
+    }
+    pub fn get_prey_count(&self) -> u32 {
+        self.inner.prey_count() as u32
+    }
+    pub fn get_pred_count(&self) -> u32 {
+        self.inner.pred_count() as u32
+    }
+    pub fn get_agent_count(&self) -> u32 {
+        self.inner.agent_count() as u32
+    }
 
     pub fn get_stats_json(&self) -> String {
         serde_json::to_string(&self.inner.stats()).unwrap_or_default()
@@ -69,9 +79,11 @@ impl WasmHospitalEngine {
     #[wasm_bindgen(constructor)]
     pub fn new(params_json: &str, seed: u32) -> Result<WasmHospitalEngine, JsValue> {
         console_error_panic_hook::set_once();
-        let params: HospitalParams = serde_json::from_str(params_json)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        Ok(WasmHospitalEngine { inner: HospitalSimEngine::new(params, seed) })
+        let params: HospitalParams =
+            serde_json::from_str(params_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(WasmHospitalEngine {
+            inner: HospitalSimEngine::new(params, seed),
+        })
     }
 
     /// Advance one simulation tick (≈ 5 min). Returns current patient census.
@@ -92,8 +104,8 @@ impl WasmHospitalEngine {
 
     /// Update engine parameters at runtime (e.g. adjust DTMC rates).
     pub fn set_params(&mut self, params_json: &str) -> Result<(), JsValue> {
-        let params: HospitalParams = serde_json::from_str(params_json)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let params: HospitalParams =
+            serde_json::from_str(params_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
         self.inner.set_params(params);
         Ok(())
     }
@@ -107,7 +119,13 @@ impl WasmHospitalEngine {
         serde_json::to_string(&self.inner.stats()).unwrap_or_default()
     }
 
-    pub fn get_tick(&self)           -> u32 { self.inner.tick()           as u32 }
-    pub fn get_patient_count(&self)  -> u32 { self.inner.patient_count()  as u32 }
-    pub fn get_cumulative_hai(&self) -> u32 { self.inner.cumulative_hai()         }
+    pub fn get_tick(&self) -> u32 {
+        self.inner.tick() as u32
+    }
+    pub fn get_patient_count(&self) -> u32 {
+        self.inner.patient_count() as u32
+    }
+    pub fn get_cumulative_hai(&self) -> u32 {
+        self.inner.cumulative_hai()
+    }
 }

@@ -1,2 +1,2 @@
 pub mod stats;
-pub use stats::{SimStats, compute_stats};
+pub use stats::{compute_stats, SimStats};

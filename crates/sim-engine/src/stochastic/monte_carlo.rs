@@ -17,7 +17,7 @@ use crate::rng::Mulberry32;
 /// Usage: call `reset()` at the start of each replication to re-synchronize
 /// all streams to their original seeds.
 pub struct CrnManager {
-    streams:   Vec<Mulberry32>,
+    streams: Vec<Mulberry32>,
     base_seed: u32,
 }
 
@@ -46,9 +46,7 @@ impl CrnManager {
 
     /// Reset a single stream (e.g., after a scenario diverges from CRN).
     pub fn reset_stream(&mut self, i: usize) {
-        self.streams[i] = Mulberry32::new(
-            self.base_seed.wrapping_add(i as u32 * 0x9e3779b9),
-        );
+        self.streams[i] = Mulberry32::new(self.base_seed.wrapping_add(i as u32 * 0x9e3779b9));
     }
 
     pub fn n_streams(&self) -> usize {
@@ -85,19 +83,19 @@ pub fn monte_carlo_run<F>(n_reps: u32, base_seed: u32, sim: F) -> (f32, f32)
 where
     F: Fn(&mut Mulberry32) -> f32,
 {
-    let mut sum    = 0.0f32;
+    let mut sum = 0.0f32;
     let mut sum_sq = 0.0f32;
 
     for rep in 0..n_reps {
         let mut rng = Mulberry32::new(base_seed.wrapping_add(rep));
         let y = sim(&mut rng);
-        sum    += y;
+        sum += y;
         sum_sq += y * y;
     }
 
-    let n      = n_reps as f32;
-    let mean   = sum / n;
-    let var    = (sum_sq / n - mean * mean).max(0.0);
+    let n = n_reps as f32;
+    let mean = sum / n;
+    let var = (sum_sq / n - mean * mean).max(0.0);
     let stderr = (var / n).sqrt();
     (mean, stderr)
 }

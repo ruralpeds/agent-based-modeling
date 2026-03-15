@@ -8,8 +8,8 @@ use crate::stochastic::distributions::exponential_sample;
 #[derive(Debug, Clone)]
 pub struct CtmcTransition {
     pub from: usize,
-    pub to:   usize,
-    pub rate: f32,  // q_{ij}, must be ≥ 0
+    pub to: usize,
+    pub rate: f32, // q_{ij}, must be ≥ 0
 }
 
 // ─── Gillespie sampler ────────────────────────────────────────────────────────
@@ -32,14 +32,12 @@ impl GillespieSampler {
     ///   1. Sum enabled rates: R = Σ q_{current → j}
     ///   2. τ ~ Exp(R)
     ///   3. destination chosen with probability q_{current → j} / R
-    pub fn next_event(
-        &self,
-        current_state: usize,
-        rng: &mut Mulberry32,
-    ) -> Option<(f32, usize)> {
+    pub fn next_event(&self, current_state: usize, rng: &mut Mulberry32) -> Option<(f32, usize)> {
         // Collect enabled transitions out of current state.
         // Iterate twice to avoid allocating a Vec in the hot path.
-        let total_rate: f32 = self.transitions.iter()
+        let total_rate: f32 = self
+            .transitions
+            .iter()
             .filter(|t| t.from == current_state && t.rate > 0.0)
             .map(|t| t.rate)
             .sum();
@@ -54,7 +52,11 @@ impl GillespieSampler {
         let u = rng.next_f32() * total_rate;
         let mut cumsum = 0.0f32;
         let mut last_to = current_state; // fallback (should not be reached)
-        for t in self.transitions.iter().filter(|t| t.from == current_state && t.rate > 0.0) {
+        for t in self
+            .transitions
+            .iter()
+            .filter(|t| t.from == current_state && t.rate > 0.0)
+        {
             cumsum += t.rate;
             last_to = t.to;
             if u < cumsum {
@@ -77,7 +79,8 @@ impl GillespieSampler {
 
     /// Total outflow rate |q_ii| for `state`.
     pub fn total_rate_from(&self, state: usize) -> f32 {
-        self.transitions.iter()
+        self.transitions
+            .iter()
             .filter(|t| t.from == state && t.rate > 0.0)
             .map(|t| t.rate)
             .sum()
@@ -91,7 +94,7 @@ impl GillespieSampler {
         time_horizon: f32,
         rng: &mut Mulberry32,
     ) -> usize {
-        let mut state   = start_state;
+        let mut state = start_state;
         let mut elapsed = 0.0f32;
         loop {
             match self.next_event(state, rng) {
@@ -115,7 +118,15 @@ impl GillespieSampler {
 /// State 0 = Susceptible, State 1 = Colonized.
 pub fn colonization_ctmc(colonization_rate: f32, clearance_rate: f32) -> GillespieSampler {
     GillespieSampler::new(vec![
-        CtmcTransition { from: 0, to: 1, rate: colonization_rate },
-        CtmcTransition { from: 1, to: 0, rate: clearance_rate },
+        CtmcTransition {
+            from: 0,
+            to: 1,
+            rate: colonization_rate,
+        },
+        CtmcTransition {
+            from: 1,
+            to: 0,
+            rate: clearance_rate,
+        },
     ])
 }

@@ -1,8 +1,20 @@
 #[derive(Debug, Clone)]
 pub enum SimEvent {
-    Birth { id: u32, parent_id: u32, tick: u64 },
-    Death { id: u32, cause: DeathCause, tick: u64 },
-    Kill  { predator_id: u32, prey_id: u32, tick: u64 },
+    Birth {
+        id: u32,
+        parent_id: u32,
+        tick: u64,
+    },
+    Death {
+        id: u32,
+        cause: DeathCause,
+        tick: u64,
+    },
+    Kill {
+        predator_id: u32,
+        prey_id: u32,
+        tick: u64,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -19,7 +31,10 @@ pub struct EventLog {
 
 impl EventLog {
     pub fn new(max_len: usize) -> Self {
-        Self { events: Vec::with_capacity(max_len), max_len }
+        Self {
+            events: Vec::with_capacity(max_len),
+            max_len,
+        }
     }
 
     pub fn push(&mut self, event: SimEvent) {

@@ -1,3 +1,4 @@
+use crate::stochastic::bayesian::{BayesianBeliefState, ClinicalObservation};
 /// Infection Control Agent: SPRT-based outbreak detection and per-patient
 /// Bayesian colonization belief tracking.
 ///
@@ -6,7 +7,6 @@
 ///   Stop if Λₙ ≥ log((1-β)/α)  → signal outbreak
 ///           Λₙ ≤ log(β/(1-α))  → accept baseline
 use std::collections::HashMap;
-use crate::stochastic::bayesian::{BayesianBeliefState, ClinicalObservation};
 
 // ─── SPRT ─────────────────────────────────────────────────────────────────────
 
@@ -28,31 +28,34 @@ pub enum SprtDecision {
 #[derive(Debug, Clone)]
 pub struct SprtMonitor {
     /// Baseline expected case rate (per patient-day).
-    pub lambda_0:           f32,
+    pub lambda_0: f32,
     /// Outbreak rate multiplier (H₁ = multiplier × λ₀).
     pub outbreak_multiplier: f32,
     /// Type-I error target (false-positive rate).
-    pub alpha:              f32,
+    pub alpha: f32,
     /// Type-II error target (false-negative rate).
-    pub beta:               f32,
+    pub beta: f32,
     /// Running log-likelihood ratio.
-    pub log_lr:             f32,
+    pub log_lr: f32,
     /// Cumulative cases observed in this monitoring window.
-    pub case_count:         u32,
+    pub case_count: u32,
     /// Cumulative patient-days observed in this window.
-    pub patient_days:       f32,
+    pub patient_days: f32,
 }
 
 impl SprtMonitor {
     pub fn new(lambda_0: f32, outbreak_multiplier: f32, alpha: f32, beta: f32) -> Self {
-        assert!(lambda_0 > 0.0,             "lambda_0 must be positive");
-        assert!(outbreak_multiplier > 1.0,  "multiplier must exceed 1");
+        assert!(lambda_0 > 0.0, "lambda_0 must be positive");
+        assert!(outbreak_multiplier > 1.0, "multiplier must exceed 1");
         assert!(alpha > 0.0 && alpha < 1.0, "alpha must be in (0,1)");
-        assert!(beta  > 0.0 && beta  < 1.0, "beta must be in (0,1)");
+        assert!(beta > 0.0 && beta < 1.0, "beta must be in (0,1)");
         Self {
-            lambda_0, outbreak_multiplier, alpha, beta,
-            log_lr:       0.0,
-            case_count:   0,
+            lambda_0,
+            outbreak_multiplier,
+            alpha,
+            beta,
+            log_lr: 0.0,
+            case_count: 0,
             patient_days: 0.0,
         }
     }
@@ -77,13 +80,13 @@ impl SprtMonitor {
     pub fn observe_case(&mut self, new_cases: u32, patient_days_delta: f32) -> SprtDecision {
         let lambda_1 = self.lambda_0 * self.outbreak_multiplier;
         let expected_0 = self.lambda_0 * patient_days_delta;
-        let expected_1 = lambda_1     * patient_days_delta;
+        let expected_1 = lambda_1 * patient_days_delta;
 
         // Poisson log-likelihood ratio increment: n·log(λ₁/λ₀) − (λ₁−λ₀)·t
-        let increment = new_cases as f32 * (lambda_1 / self.lambda_0).ln()
-                        - (expected_1 - expected_0);
-        self.log_lr      += increment;
-        self.case_count  += new_cases;
+        let increment =
+            new_cases as f32 * (lambda_1 / self.lambda_0).ln() - (expected_1 - expected_0);
+        self.log_lr += increment;
+        self.case_count += new_cases;
         self.patient_days += patient_days_delta;
 
         if self.log_lr >= self.upper_boundary() {
@@ -97,8 +100,8 @@ impl SprtMonitor {
 
     /// Reset SPRT after a decision or periodic restart.
     pub fn reset_sprt(&mut self) {
-        self.log_lr       = 0.0;
-        self.case_count   = 0;
+        self.log_lr = 0.0;
+        self.case_count = 0;
         self.patient_days = 0.0;
     }
 }
@@ -109,10 +112,10 @@ impl SprtMonitor {
 /// and maintains a per-patient Bayesian belief over colonization status.
 #[derive(Debug, Clone)]
 pub struct InfectionControlAgent {
-    pub id:             u32,
-    pub unit_id:        u16,
+    pub id: u32,
+    pub unit_id: u16,
     /// SPRT monitor for this ward/unit.
-    pub sprt:           SprtMonitor,
+    pub sprt: SprtMonitor,
     /// Per-patient colonization beliefs (patient_id → BayesianBeliefState).
     pub patient_beliefs: HashMap<u32, BayesianBeliefState>,
     /// Ticks since last audit round was completed.
@@ -126,9 +129,9 @@ impl InfectionControlAgent {
         Self {
             id,
             unit_id,
-            sprt:                SprtMonitor::icu_default(),
-            patient_beliefs:     HashMap::new(),
-            ticks_since_audit:   0,
+            sprt: SprtMonitor::icu_default(),
+            patient_beliefs: HashMap::new(),
+            ticks_since_audit: 0,
             audit_interval_ticks: 12 * 24 * 7, // weekly
         }
     }

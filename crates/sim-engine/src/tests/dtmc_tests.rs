@@ -5,7 +5,9 @@
 #[cfg(test)]
 mod tests {
     use crate::rng::Mulberry32;
-    use crate::stochastic::dtmc::{PatientDTMC, build_hai_dtmc_matrix, max_row_sum_error, N_DISEASE_STATES};
+    use crate::stochastic::dtmc::{
+        build_hai_dtmc_matrix, max_row_sum_error, PatientDTMC, N_DISEASE_STATES,
+    };
 
     // ── 3-state ergodic chain with known stationary distribution ─────────────
 
@@ -16,11 +18,7 @@ mod tests {
     /// Solving π P = π, π·1 = 1 gives:
     ///   π₀ ≈ 0.4054,  π₁ ≈ 0.2432,  π₂ ≈ 0.3514
     fn ergodic_3x3_matrix() -> Vec<f32> {
-        vec![
-            0.7, 0.2, 0.1,
-            0.3, 0.5, 0.2,
-            0.4, 0.1, 0.5,
-        ]
+        vec![0.7, 0.2, 0.1, 0.3, 0.5, 0.2, 0.4, 0.1, 0.5]
     }
 
     // Analytic stationary distribution, solved from π P = π, Σπᵢ = 1:
@@ -32,7 +30,7 @@ mod tests {
     #[test]
     fn stationary_distribution_convergence() {
         let matrix = ergodic_3x3_matrix();
-        let dtmc   = PatientDTMC::new(3);
+        let dtmc = PatientDTMC::new(3);
         let mut rng = Mulberry32::new(42);
 
         let n_steps = 500_000usize;
@@ -46,8 +44,8 @@ mod tests {
 
         for i in 0..3 {
             let empirical = counts[i] as f32 / n_steps as f32;
-            let analytic  = PI[i];
-            let abs_err   = (empirical - analytic).abs();
+            let analytic = PI[i];
+            let abs_err = (empirical - analytic).abs();
             assert!(
                 abs_err < 0.01,
                 "State {i}: empirical {empirical:.4} vs analytic {analytic:.4}, err {abs_err:.4}"
@@ -58,9 +56,8 @@ mod tests {
     #[test]
     fn dtmc_absorbing_state_stays_absorbing() {
         // Dead (state 6) must be absorbing: once entered, stays there.
-        let matrix = build_hai_dtmc_matrix(
-            0.05, 0.10, 0.01, 0.08, 0.05, 0.15, 0.10, 0.20, 0.05, 0.002,
-        );
+        let matrix =
+            build_hai_dtmc_matrix(0.05, 0.10, 0.01, 0.08, 0.05, 0.15, 0.10, 0.20, 0.05, 0.002);
         let dtmc = PatientDTMC::new(N_DISEASE_STATES);
         let mut rng = Mulberry32::new(7);
 
@@ -72,9 +69,8 @@ mod tests {
 
     #[test]
     fn hai_dtmc_rows_sum_to_one() {
-        let matrix = build_hai_dtmc_matrix(
-            0.05, 0.10, 0.01, 0.08, 0.05, 0.15, 0.10, 0.20, 0.05, 0.002,
-        );
+        let matrix =
+            build_hai_dtmc_matrix(0.05, 0.10, 0.01, 0.08, 0.05, 0.15, 0.10, 0.20, 0.05, 0.002);
         let err = max_row_sum_error(&matrix, N_DISEASE_STATES);
         assert!(err < 1e-5, "max row-sum error {err:.2e} exceeds 1e-5");
     }
@@ -83,9 +79,8 @@ mod tests {
     fn dtmc_sampling_hits_all_reachable_states() {
         // From Susceptible with lambda=0.20, all states should be visited
         // in 100_000 steps given the provided rates.
-        let matrix = build_hai_dtmc_matrix(
-            0.20, 0.30, 0.02, 0.20, 0.10, 0.50, 0.15, 0.40, 0.10, 0.005,
-        );
+        let matrix =
+            build_hai_dtmc_matrix(0.20, 0.30, 0.02, 0.20, 0.10, 0.50, 0.15, 0.40, 0.10, 0.005);
         let dtmc = PatientDTMC::new(N_DISEASE_STATES);
         let mut rng = Mulberry32::new(31);
         let mut visited = [false; N_DISEASE_STATES];
@@ -93,7 +88,9 @@ mod tests {
 
         for _ in 0..100_000 {
             // Restart from Susceptible once Dead to keep chain moving.
-            if state == 6 { state = 0; }
+            if state == 6 {
+                state = 0;
+            }
             state = dtmc.sample_next_state(state, &matrix, &mut rng);
             visited[state] = true;
         }

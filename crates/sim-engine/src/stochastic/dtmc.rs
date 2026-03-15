@@ -11,12 +11,12 @@ use crate::stochastic::distributions::categorical_draw;
 #[repr(u8)]
 pub enum DiseaseState {
     Susceptible = 0,
-    Exposed     = 1,
-    Colonized   = 2,
-    Infected    = 3,
-    Treated     = 4,
-    Recovered   = 5,
-    Dead        = 6,
+    Exposed = 1,
+    Colonized = 2,
+    Infected = 3,
+    Treated = 4,
+    Recovered = 5,
+    Dead = 6,
 }
 
 pub const N_DISEASE_STATES: usize = 7;
@@ -59,13 +59,13 @@ impl PatientDTMC {
 
     /// Draw the next state index given a pre-computed row-major n×n matrix.
     /// `current` must be in 0..n.
-    pub fn sample_next_state(
-        &self,
-        current: usize,
-        matrix: &[f32],
-        rng: &mut Mulberry32,
-    ) -> usize {
-        debug_assert!(current < self.n, "current state {} out of bounds (n={})", current, self.n);
+    pub fn sample_next_state(&self, current: usize, matrix: &[f32], rng: &mut Mulberry32) -> usize {
+        debug_assert!(
+            current < self.n,
+            "current state {} out of bounds (n={})",
+            current,
+            self.n
+        );
         debug_assert_eq!(matrix.len(), self.n * self.n, "matrix size mismatch");
         let row_start = current * self.n;
         categorical_draw(&matrix[row_start..row_start + self.n], rng)
@@ -101,16 +101,16 @@ impl PatientDTMC {
 /// Rows are renormalized to sum to 1 to absorb floating-point drift.
 #[allow(clippy::too_many_arguments)]
 pub fn build_hai_dtmc_matrix(
-    lambda:  f32,
-    alpha:   f32,
+    lambda: f32,
+    alpha: f32,
     delta_e: f32,
-    beta:    f32,
-    gamma:   f32,
-    eta:     f32,
-    psi:     f32,
-    rho:     f32,
-    phi:     f32,
-    theta:   f32,
+    beta: f32,
+    gamma: f32,
+    eta: f32,
+    psi: f32,
+    rho: f32,
+    phi: f32,
+    theta: f32,
 ) -> Vec<f32> {
     use DiseaseState::*;
     let n = N_DISEASE_STATES;
@@ -119,35 +119,35 @@ pub fn build_hai_dtmc_matrix(
     let row = |s: DiseaseState| s.as_index() * n;
 
     // Row 0: Susceptible
-    p[row(Susceptible) + Exposed as usize]     = lambda.min(1.0);
+    p[row(Susceptible) + Exposed as usize] = lambda.min(1.0);
     p[row(Susceptible) + Susceptible as usize] = (1.0 - lambda).max(0.0);
 
     // Row 1: Exposed
     let leave_e = (alpha + delta_e).min(1.0);
     p[row(Exposed) + Colonized as usize] = alpha.min(leave_e);
-    p[row(Exposed) + Dead as usize]      = delta_e.min(leave_e);
-    p[row(Exposed) + Exposed as usize]   = (1.0 - leave_e).max(0.0);
+    p[row(Exposed) + Dead as usize] = delta_e.min(leave_e);
+    p[row(Exposed) + Exposed as usize] = (1.0 - leave_e).max(0.0);
 
     // Row 2: Colonized
     let leave_col = (beta + gamma).min(1.0);
-    p[row(Colonized) + Infected as usize]   = beta.min(leave_col);
-    p[row(Colonized) + Treated as usize]    = gamma.min(leave_col);
-    p[row(Colonized) + Colonized as usize]  = (1.0 - leave_col).max(0.0);
+    p[row(Colonized) + Infected as usize] = beta.min(leave_col);
+    p[row(Colonized) + Treated as usize] = gamma.min(leave_col);
+    p[row(Colonized) + Colonized as usize] = (1.0 - leave_col).max(0.0);
 
     // Row 3: Infected
     let leave_inf = (eta + psi).min(1.0);
-    p[row(Infected) + Treated as usize]  = eta.min(leave_inf);
-    p[row(Infected) + Dead as usize]     = psi.min(leave_inf);
+    p[row(Infected) + Treated as usize] = eta.min(leave_inf);
+    p[row(Infected) + Dead as usize] = psi.min(leave_inf);
     p[row(Infected) + Infected as usize] = (1.0 - leave_inf).max(0.0);
 
     // Row 4: Treated
     let leave_tx = (rho + phi).min(1.0);
     p[row(Treated) + Recovered as usize] = rho.min(leave_tx);
-    p[row(Treated) + Dead as usize]      = phi.min(leave_tx);
-    p[row(Treated) + Treated as usize]   = (1.0 - leave_tx).max(0.0);
+    p[row(Treated) + Dead as usize] = phi.min(leave_tx);
+    p[row(Treated) + Treated as usize] = (1.0 - leave_tx).max(0.0);
 
     // Row 5: Recovered
-    p[row(Recovered) + Dead as usize]      = theta.min(1.0);
+    p[row(Recovered) + Dead as usize] = theta.min(1.0);
     p[row(Recovered) + Recovered as usize] = (1.0 - theta).max(0.0);
 
     // Row 6: Dead (absorbing)

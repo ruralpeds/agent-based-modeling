@@ -1,3 +1,13 @@
+use super::hospital_buffers::write_patient_soa;
+use super::hospital_params::{HospitalParams, HospitalStats, FIELDS_PER_PATIENT, MAX_PATIENTS};
+use crate::agents::bed_agent::BedAgent;
+use crate::agents::infection_control::{InfectionControlAgent, SprtDecision};
+use crate::agents::nurse_agent::NurseAgent;
+use crate::agents::pathogen::{escalate_resistance, resistance_mutation_event, transmission_event};
+use crate::agents::patient_agent::{PatientAgent, PatientParams};
+use crate::agents::physician_agent::PhysicianAgent;
+use crate::agents::types::TreatmentAction;
+use crate::decision_rules::social_learning::{social_learning_from_mean, SocialLearningParams};
 /// HospitalSimEngine — tick-driven HAI simulation.
 ///
 /// Tick loop (one 5-minute step at 12 ticks/h):
@@ -16,57 +26,45 @@
 /// 12. Periodic social learning for providers.
 /// 13. Write SoA patient buffer.
 use crate::rng::Mulberry32;
-use crate::stochastic::dtmc::{PatientDTMC, DiseaseState, build_hai_dtmc_matrix};
-use crate::stochastic::sde::{OrnsteinUhlenbeck, OneCompartmentPk};
-use crate::stochastic::poisson::NhppArrivalProcess;
 use crate::stochastic::bayesian::ClinicalObservation;
-use crate::agents::patient_agent::{PatientAgent, PatientParams};
-use crate::agents::nurse_agent::NurseAgent;
-use crate::agents::bed_agent::BedAgent;
-use crate::agents::physician_agent::PhysicianAgent;
-use crate::agents::infection_control::{InfectionControlAgent, SprtDecision};
-use crate::agents::pathogen::{
-    transmission_event, resistance_mutation_event, escalate_resistance,
-};
-use crate::agents::types::TreatmentAction;
-use crate::decision_rules::social_learning::{SocialLearningParams, social_learning_from_mean};
-use super::hospital_params::{HospitalParams, HospitalStats, MAX_PATIENTS, FIELDS_PER_PATIENT};
-use super::hospital_buffers::write_patient_soa;
+use crate::stochastic::dtmc::{build_hai_dtmc_matrix, DiseaseState, PatientDTMC};
+use crate::stochastic::poisson::NhppArrivalProcess;
+use crate::stochastic::sde::{OneCompartmentPk, OrnsteinUhlenbeck};
 
 // ─── HospitalSimEngine ────────────────────────────────────────────────────────
 
 pub struct HospitalSimEngine {
-    pub patients:   Vec<PatientAgent>,
-    pub nurses:     Vec<NurseAgent>,
-    pub beds:       Vec<BedAgent>,
+    pub patients: Vec<PatientAgent>,
+    pub nurses: Vec<NurseAgent>,
+    pub beds: Vec<BedAgent>,
     pub physicians: Vec<PhysicianAgent>,
-    pub ica:        InfectionControlAgent,
-    pub rng:        Mulberry32,
-    pub tick:       u64,
-    pub params:     HospitalParams,
+    pub ica: InfectionControlAgent,
+    pub rng: Mulberry32,
+    pub tick: u64,
+    pub params: HospitalParams,
 
     // ── Internal derived state ─────────────────────────────────────────────────
-    dtmc:              PatientDTMC,
-    dtmc_matrix:       Vec<f32>,
-    arriv_process:     NhppArrivalProcess,
+    dtmc: PatientDTMC,
+    dtmc_matrix: Vec<f32>,
+    arriv_process: NhppArrivalProcess,
     #[allow(dead_code)]
-    wbc_ou:            OrnsteinUhlenbeck,
+    wbc_ou: OrnsteinUhlenbeck,
     #[allow(dead_code)]
-    temp_ou:           OrnsteinUhlenbeck,
-    pk:                OneCompartmentPk,
-    social_params:     SocialLearningParams,
+    temp_ou: OrnsteinUhlenbeck,
+    pk: OneCompartmentPk,
+    social_params: SocialLearningParams,
 
     /// Ticks until the next scheduled patient arrival.
-    next_arrival_in:   u64,
+    next_arrival_in: u64,
     /// Running patient ID counter.
-    next_patient_id:   u32,
+    next_patient_id: u32,
     /// Cumulative HAI count.
     pub cumulative_hai: u32,
     /// HAI in the current tick.
-    new_hai_this_tick:  u32,
+    new_hai_this_tick: u32,
     /// HH compliance events this tick.
-    hh_yes:            u32,
-    hh_total:          u32,
+    hh_yes: u32,
+    hh_total: u32,
     /// Whether outbreak was signalled this tick.
     pub outbreak_signal: bool,
 
@@ -80,9 +78,15 @@ impl HospitalSimEngine {
 
         let dtmc = PatientDTMC { n: 7 };
         let dtmc_matrix = build_hai_dtmc_matrix(
-            params.dtmc_lambda, params.dtmc_alpha, params.dtmc_delta_e,
-            params.dtmc_beta,   params.dtmc_gamma, params.dtmc_eta,
-            params.dtmc_psi,    params.dtmc_rho,   params.dtmc_phi,
+            params.dtmc_lambda,
+            params.dtmc_alpha,
+            params.dtmc_delta_e,
+            params.dtmc_beta,
+            params.dtmc_gamma,
+            params.dtmc_eta,
+            params.dtmc_psi,
+            params.dtmc_rho,
+            params.dtmc_phi,
             params.dtmc_theta,
         );
 
@@ -90,8 +94,7 @@ impl HospitalSimEngine {
         let arriv_process = NhppArrivalProcess::with_base_rate(params.base_arrival_rate);
 
         // Sample initial next-arrival gap.
-        let next_arrival_in = arriv_process
-            .next_arrival_delta(0, params.ticks_per_hour, &mut rng);
+        let next_arrival_in = arriv_process.next_arrival_delta(0, params.ticks_per_hour, &mut rng);
 
         // Nurse roster: spread across beds.
         let n_beds = params.icu_beds + params.ward_beds;
@@ -122,29 +125,29 @@ impl HospitalSimEngine {
         let ica = InfectionControlAgent::new(0, 0);
 
         Self {
-            patients:          Vec::with_capacity(MAX_PATIENTS),
+            patients: Vec::with_capacity(MAX_PATIENTS),
             nurses,
             beds,
             physicians,
             ica,
             rng,
-            tick:              0,
+            tick: 0,
             params,
             dtmc,
             dtmc_matrix,
             arriv_process,
-            wbc_ou:            OrnsteinUhlenbeck::wbc(),
-            temp_ou:           OrnsteinUhlenbeck::temperature(),
-            pk:                OneCompartmentPk::antibiotic_iv(),
-            social_params:     SocialLearningParams::default(),
+            wbc_ou: OrnsteinUhlenbeck::wbc(),
+            temp_ou: OrnsteinUhlenbeck::temperature(),
+            pk: OneCompartmentPk::antibiotic_iv(),
+            social_params: SocialLearningParams::default(),
             next_arrival_in,
-            next_patient_id:   0,
-            cumulative_hai:    0,
+            next_patient_id: 0,
+            cumulative_hai: 0,
             new_hai_this_tick: 0,
-            hh_yes:            0,
-            hh_total:          0,
-            outbreak_signal:   false,
-            patient_buf:       vec![0.0f32; MAX_PATIENTS * FIELDS_PER_PATIENT],
+            hh_yes: 0,
+            hh_total: 0,
+            outbreak_signal: false,
+            patient_buf: vec![0.0f32; MAX_PATIENTS * FIELDS_PER_PATIENT],
         }
     }
 
@@ -152,9 +155,9 @@ impl HospitalSimEngine {
 
     pub fn step(&mut self) {
         self.new_hai_this_tick = 0;
-        self.hh_yes            = 0;
-        self.hh_total          = 0;
-        self.outbreak_signal   = false;
+        self.hh_yes = 0;
+        self.hh_total = 0;
+        self.outbreak_signal = false;
 
         // 1. Patient arrivals ─────────────────────────────────────────────────
         self.process_arrivals();
@@ -181,7 +184,10 @@ impl HospitalSimEngine {
         self.update_sprt();
 
         // 12. Social learning ─────────────────────────────────────────────────
-        if self.tick.is_multiple_of(self.params.social_learning_period as u64) {
+        if self
+            .tick
+            .is_multiple_of(self.params.social_learning_period as u64)
+        {
             self.run_social_learning();
         }
 
@@ -193,9 +199,9 @@ impl HospitalSimEngine {
     fn process_arrivals(&mut self) {
         while self.next_arrival_in == 0 && self.patients.len() < MAX_PATIENTS {
             let patient_params = PatientParams {
-                ticks_per_hour:              self.params.ticks_per_hour,
+                ticks_per_hour: self.params.ticks_per_hour,
                 admission_colonization_rate: self.params.admission_colonization_rate,
-                cox:                         self.params.cox,
+                cox: self.params.cox,
             };
             let mut p = PatientAgent::new_icu(
                 self.next_patient_id,
@@ -214,7 +220,7 @@ impl HospitalSimEngine {
             }
             // Assign to first free bed.
             if let Some(bed) = self.beds.iter_mut().find(|b| !b.is_occupied()) {
-                p.bed_id  = bed.id;
+                p.bed_id = bed.id;
                 p.room_id = bed.room_id;
                 bed.assign_patient(p.id);
             }
@@ -233,8 +239,11 @@ impl HospitalSimEngine {
             self.patients.push(p);
 
             // Schedule next arrival.
-            self.next_arrival_in = self.arriv_process
-                .next_arrival_delta(self.tick, self.params.ticks_per_hour, &mut self.rng);
+            self.next_arrival_in = self.arriv_process.next_arrival_delta(
+                self.tick,
+                self.params.ticks_per_hour,
+                &mut self.rng,
+            );
         }
         if self.next_arrival_in > 0 {
             self.next_arrival_in -= 1;
@@ -260,12 +269,20 @@ impl HospitalSimEngine {
                 &self.params.nurse,
                 &mut self.rng,
             );
-            if hh { self.hh_yes += 1; }
+            if hh {
+                self.hh_yes += 1;
+            }
 
-            if !contact_event { continue; }
+            if !contact_event {
+                continue;
+            }
 
             // Find the nurse's first patient (simplified: check patient_ids[0]).
-            let patient_id = if nurse.n_patients > 0 { nurse.patient_ids[0] } else { continue };
+            let patient_id = if nurse.n_patients > 0 {
+                nurse.patient_ids[0]
+            } else {
+                continue;
+            };
 
             // Direct-contact: source patient → nurse hands → target patient.
             let source_idx = self.patients.iter().position(|p| p.id == patient_id);
@@ -278,16 +295,26 @@ impl HospitalSimEngine {
                     let dose = self.patients[si].pathogen_load;
                     // Find another susceptible patient to potentially infect.
                     // (Round-robin: try the next patient in nurse's list.)
-                    let target_id = if nurse.n_patients > 1 { nurse.patient_ids[1] } else { patient_id };
+                    let target_id = if nurse.n_patients > 1 {
+                        nurse.patient_ids[1]
+                    } else {
+                        patient_id
+                    };
                     if let Some(ti) = self.patients.iter().position(|p| p.id == target_id) {
-                        if ti != si && self.patients[ti].disease_state == DiseaseState::Susceptible {
+                        if ti != si && self.patients[ti].disease_state == DiseaseState::Susceptible
+                        {
                             let susc_mult = self.patients[ti].susceptibility_multiplier();
                             let effective_dose = dose * susc_mult;
-                            if transmission_event(effective_dose, false, &self.params.pathogen, &mut self.rng) {
-                                self.patients[ti].disease_state  = DiseaseState::Exposed;
-                                self.patients[ti].pathogen_load  = 0.1;
+                            if transmission_event(
+                                effective_dose,
+                                false,
+                                &self.params.pathogen,
+                                &mut self.rng,
+                            ) {
+                                self.patients[ti].disease_state = DiseaseState::Exposed;
+                                self.patients[ti].pathogen_load = 0.1;
                                 self.new_hai_this_tick += 1;
-                                self.cumulative_hai    += 1;
+                                self.cumulative_hai += 1;
                             }
                         }
                     }
@@ -305,10 +332,10 @@ impl HospitalSimEngine {
                         if self.patients[si].disease_state == DiseaseState::Susceptible
                             && self.rng.next_f32() < susc_mult * bed.contamination
                         {
-                            self.patients[si].disease_state  = DiseaseState::Exposed;
-                            self.patients[si].pathogen_load  = 0.05;
+                            self.patients[si].disease_state = DiseaseState::Exposed;
+                            self.patients[si].pathogen_load = 0.05;
                             self.new_hai_this_tick += 1;
-                            self.cumulative_hai    += 1;
+                            self.cumulative_hai += 1;
                         }
                     }
                 }
@@ -331,19 +358,28 @@ impl HospitalSimEngine {
                 DiseaseState::Colonized => 9.0,
                 _ => 7.5,
             };
-            let ou_wbc  = OrnsteinUhlenbeck { theta: 0.10, mu: wbc_mu,  sigma: 0.30 };
-            let ou_temp = OrnsteinUhlenbeck { theta: 0.15, mu: match p.disease_state {
-                DiseaseState::Infected => 38.5,
-                _ => 37.0,
-            }, sigma: 0.05 };
+            let ou_wbc = OrnsteinUhlenbeck {
+                theta: 0.10,
+                mu: wbc_mu,
+                sigma: 0.30,
+            };
+            let ou_temp = OrnsteinUhlenbeck {
+                theta: 0.15,
+                mu: match p.disease_state {
+                    DiseaseState::Infected => 38.5,
+                    _ => 37.0,
+                },
+                sigma: 0.05,
+            };
 
-            p.wbc         = ou_wbc.step_clamped(p.wbc,         DT, 0.5,  25.0, &mut self.rng);
+            p.wbc = ou_wbc.step_clamped(p.wbc, DT, 0.5, 25.0, &mut self.rng);
             p.temperature = ou_temp.step_clamped(p.temperature, DT, 35.0, 41.0, &mut self.rng);
 
             // PK step: antibiotic concentration.
-            let dose = if matches!(p.current_treatment,
-                TreatmentAction::StartBroadSpectrum | TreatmentAction::StartNarrowSpectrum)
-            {
+            let dose = if matches!(
+                p.current_treatment,
+                TreatmentAction::StartBroadSpectrum | TreatmentAction::StartNarrowSpectrum
+            ) {
                 let efficacy = crate::agents::pathogen::antibiotic_efficacy(
                     p.resistance_profile,
                     crate::agents::types::AntibioticClass::Vancomycin,
@@ -385,12 +421,12 @@ impl HospitalSimEngine {
 
             // Update pathogen load based on disease state.
             p.pathogen_load = match p.disease_state {
-                DiseaseState::Infected    => 0.8,
-                DiseaseState::Colonized   => 0.3,
-                DiseaseState::Treated     => (p.pathogen_load * 0.85).max(0.0),
-                DiseaseState::Recovered   => 0.0,
-                DiseaseState::Dead        => 0.0,
-                _                         => p.pathogen_load * 0.95,
+                DiseaseState::Infected => 0.8,
+                DiseaseState::Colonized => 0.3,
+                DiseaseState::Treated => (p.pathogen_load * 0.85).max(0.0),
+                DiseaseState::Recovered => 0.0,
+                DiseaseState::Dead => 0.0,
+                _ => p.pathogen_load * 0.95,
             };
         }
     }
@@ -406,12 +442,15 @@ impl HospitalSimEngine {
             let phys_id = p.attending_id;
             if let Some(phys) = self.physicians.iter_mut().find(|ph| ph.id == phys_id) {
                 // Feed clinical signals to pBDI.
-                phys.observe_clinical(ClinicalObservation::Fever,
-                    p.temperature > 38.3);
-                phys.observe_clinical(ClinicalObservation::AbnormalWbc,
-                    p.wbc < 4.0 || p.wbc > 11.0);
-                phys.observe_clinical(ClinicalObservation::IncreasedVentSupport,
-                    p.ventilated && p.disease_state == DiseaseState::Infected);
+                phys.observe_clinical(ClinicalObservation::Fever, p.temperature > 38.3);
+                phys.observe_clinical(
+                    ClinicalObservation::AbnormalWbc,
+                    p.wbc < 4.0 || p.wbc > 11.0,
+                );
+                phys.observe_clinical(
+                    ClinicalObservation::IncreasedVentSupport,
+                    p.ventilated && p.disease_state == DiseaseState::Infected,
+                );
 
                 let action = phys.deliberate();
                 p.current_treatment = action;
@@ -423,20 +462,24 @@ impl HospitalSimEngine {
                         // (Physical isolation is modelled by reducing pathogen_load transmission.)
                         p.pathogen_load *= 0.5;
                     }
-                    TreatmentAction::StartBroadSpectrum |
-                    TreatmentAction::StartNarrowSpectrum => {
+                    TreatmentAction::StartBroadSpectrum | TreatmentAction::StartNarrowSpectrum => {
                         // Drug concentration handled in PK step.
                     }
                     TreatmentAction::OrderCulture => {
                         // Culture result informs pBDI next tick via PositiveCulture sign.
                         let culture_positive = p.disease_state == DiseaseState::Colonized
                             || p.disease_state == DiseaseState::Infected;
-                        phys.observe_clinical(ClinicalObservation::PositiveCulture, culture_positive);
+                        phys.observe_clinical(
+                            ClinicalObservation::PositiveCulture,
+                            culture_positive,
+                        );
                         // Update infection control belief.
                         if culture_positive {
-                            self.ica.update_positive(p.id, ClinicalObservation::PositiveCulture);
+                            self.ica
+                                .update_positive(p.id, ClinicalObservation::PositiveCulture);
                         } else {
-                            self.ica.update_negative(p.id, ClinicalObservation::PositiveCulture);
+                            self.ica
+                                .update_negative(p.id, ClinicalObservation::PositiveCulture);
                         }
                     }
                     _ => {}
@@ -450,7 +493,11 @@ impl HospitalSimEngine {
     fn check_resistance_mutations(&mut self) {
         for p in &mut self.patients {
             if p.antibiotic_days > 0
-                && resistance_mutation_event(p.antibiotic_days, &self.params.pathogen, &mut self.rng)
+                && resistance_mutation_event(
+                    p.antibiotic_days,
+                    &self.params.pathogen,
+                    &mut self.rng,
+                )
             {
                 p.resistance_profile = escalate_resistance(p.resistance_profile);
             }
@@ -470,9 +517,10 @@ impl HospitalSimEngine {
 
         for p in &self.patients {
             let age_in_sim = tick.saturating_sub(p.arrival_tick);
-            let explicit_discharge = p.current_treatment == TreatmentAction::Discharge
-                && age_in_sim >= min_stay;
-            if p.should_discharge(tick) || explicit_discharge
+            let explicit_discharge =
+                p.current_treatment == TreatmentAction::Discharge && age_in_sim >= min_stay;
+            if p.should_discharge(tick)
+                || explicit_discharge
                 || p.disease_state == DiseaseState::Dead
             {
                 discharge_ids.push(p.id);
@@ -505,7 +553,7 @@ impl HospitalSimEngine {
         let decision = self.ica.observe_cases(self.new_hai_this_tick, patient_days);
         if decision == SprtDecision::SignalOutbreak {
             self.outbreak_signal = true;
-            self.ica.reset_sprt();   // restart after signalling
+            self.ica.reset_sprt(); // restart after signalling
         }
         self.ica.tick_audit_clock();
         if self.ica.is_audit_due() {
@@ -518,10 +566,22 @@ impl HospitalSimEngine {
     fn run_social_learning(&mut self) {
         // Compute mean nurse compliance.
         let n = self.nurses.len();
-        if n == 0 { return; }
-        let mean_compliance: f32 = self.nurses.iter().map(|n| n.social.current_compliance).sum::<f32>() / n as f32;
+        if n == 0 {
+            return;
+        }
+        let mean_compliance: f32 = self
+            .nurses
+            .iter()
+            .map(|n| n.social.current_compliance)
+            .sum::<f32>()
+            / n as f32;
         for nurse in &mut self.nurses {
-            social_learning_from_mean(&mut nurse.social, mean_compliance, &self.social_params, &mut self.rng);
+            social_learning_from_mean(
+                &mut nurse.social,
+                mean_compliance,
+                &self.social_params,
+                &mut self.rng,
+            );
             nurse.base_compliance = nurse.social.current_compliance;
         }
     }
@@ -543,16 +603,21 @@ impl HospitalSimEngine {
 
     pub fn write_patient_buffer(&mut self) -> &[f32] {
         let n = self.patients.len();
-        write_patient_soa(&self.patients, &mut self.patient_buf[..n * FIELDS_PER_PATIENT]);
+        write_patient_soa(
+            &self.patients,
+            &mut self.patient_buf[..n * FIELDS_PER_PATIENT],
+        );
         &self.patient_buf[..n * FIELDS_PER_PATIENT]
     }
 
     pub fn stats(&self) -> HospitalStats {
         let n = self.patients.len();
-        let (sum_wbc, sum_temp, sum_drug) = self.patients.iter().fold(
-            (0.0f32, 0.0f32, 0.0f32),
-            |(w, t, d), p| (w + p.wbc, t + p.temperature, d + p.drug_conc),
-        );
+        let (sum_wbc, sum_temp, sum_drug) = self
+            .patients
+            .iter()
+            .fold((0.0f32, 0.0f32, 0.0f32), |(w, t, d), p| {
+                (w + p.wbc, t + p.temperature, d + p.drug_conc)
+            });
         let inv_n = if n > 0 { 1.0 / n as f32 } else { 0.0 };
 
         let mut disease_state_counts = [0u32; 7];
@@ -560,26 +625,36 @@ impl HospitalSimEngine {
             disease_state_counts[p.disease_state as usize] += 1;
         }
 
-        let icu_occ  = self.patients.iter().filter(|p| p.unit == crate::agents::types::HospitalUnit::Icu).count();
-        let ward_occ = self.patients.iter().filter(|p| p.unit == crate::agents::types::HospitalUnit::Ward).count();
+        let icu_occ = self
+            .patients
+            .iter()
+            .filter(|p| p.unit == crate::agents::types::HospitalUnit::Icu)
+            .count();
+        let ward_occ = self
+            .patients
+            .iter()
+            .filter(|p| p.unit == crate::agents::types::HospitalUnit::Ward)
+            .count();
 
         let hh_rate = if self.hh_total > 0 {
             self.hh_yes as f32 / self.hh_total as f32
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         HospitalStats {
-            tick:                 self.tick,
-            census:               n,
-            icu_occupancy:        icu_occ,
-            ward_occupancy:       ward_occ,
-            cumulative_hai:       self.cumulative_hai,
-            new_hai_this_tick:    self.new_hai_this_tick,
-            mean_wbc:             sum_wbc  * inv_n,
-            mean_temperature:     sum_temp * inv_n,
-            mean_drug_conc:       sum_drug * inv_n,
-            sprt_log_lr:          self.ica.sprt.log_lr,
-            outbreak_signal:      self.outbreak_signal,
-            hh_compliance_rate:   hh_rate,
+            tick: self.tick,
+            census: n,
+            icu_occupancy: icu_occ,
+            ward_occupancy: ward_occ,
+            cumulative_hai: self.cumulative_hai,
+            new_hai_this_tick: self.new_hai_this_tick,
+            mean_wbc: sum_wbc * inv_n,
+            mean_temperature: sum_temp * inv_n,
+            mean_drug_conc: sum_drug * inv_n,
+            sprt_log_lr: self.ica.sprt.log_lr,
+            outbreak_signal: self.outbreak_signal,
+            hh_compliance_rate: hh_rate,
             disease_state_counts,
         }
     }
@@ -591,26 +666,44 @@ impl HospitalSimEngine {
 
     pub fn set_params(&mut self, params: HospitalParams) {
         self.dtmc_matrix = build_hai_dtmc_matrix(
-            params.dtmc_lambda, params.dtmc_alpha, params.dtmc_delta_e,
-            params.dtmc_beta,   params.dtmc_gamma, params.dtmc_eta,
-            params.dtmc_psi,    params.dtmc_rho,   params.dtmc_phi,
+            params.dtmc_lambda,
+            params.dtmc_alpha,
+            params.dtmc_delta_e,
+            params.dtmc_beta,
+            params.dtmc_gamma,
+            params.dtmc_eta,
+            params.dtmc_psi,
+            params.dtmc_rho,
+            params.dtmc_phi,
             params.dtmc_theta,
         );
         self.arriv_process = NhppArrivalProcess::with_base_rate(params.base_arrival_rate);
         self.params = params;
     }
 
-    pub fn patient_count(&self)      -> usize { self.patients.len()   }
-    pub fn tick(&self)               -> u64   { self.tick             }
-    pub fn cumulative_hai(&self)     -> u32   { self.cumulative_hai   }
+    pub fn patient_count(&self) -> usize {
+        self.patients.len()
+    }
+    pub fn tick(&self) -> u64 {
+        self.tick
+    }
+    pub fn cumulative_hai(&self) -> u32 {
+        self.cumulative_hai
+    }
 
     // ── Utilities ─────────────────────────────────────────────────────────────
 
     fn least_loaded_nurse_id(&self) -> Option<u32> {
-        self.nurses.iter().min_by_key(|n| n.n_patients).map(|n| n.id)
+        self.nurses
+            .iter()
+            .min_by_key(|n| n.n_patients)
+            .map(|n| n.id)
     }
 
     fn least_loaded_physician_id(&self) -> Option<u32> {
-        self.physicians.iter().min_by_key(|p| p.n_patients).map(|p| p.id)
+        self.physicians
+            .iter()
+            .min_by_key(|p| p.n_patients)
+            .map(|p| p.id)
     }
 }

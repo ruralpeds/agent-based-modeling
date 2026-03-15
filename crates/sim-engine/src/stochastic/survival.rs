@@ -1,38 +1,38 @@
 /// Parametric survival distributions for healthcare length-of-stay and
 /// time-to-event outcomes.  Calibrated to HCUP NIS and SCCM data.
 use crate::rng::Mulberry32;
-use crate::stochastic::distributions::{standard_normal, exponential_sample, gamma_fn};
+use crate::stochastic::distributions::{exponential_sample, gamma_fn, standard_normal};
 
 // ─── Cox PH covariates ────────────────────────────────────────────────────────
 
 /// Patient covariates for the Cox Proportional Hazards LOS model.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct CoxCovariates {
-    pub age:                  f32,  // years
-    pub charlson_index:       f32,  // 0–37
-    pub admission_severity:   f32,  // e.g. SOFA 0–24
-    pub ventilated:           bool,
-    pub central_line:         bool,
+    pub age: f32,                // years
+    pub charlson_index: f32,     // 0–37
+    pub admission_severity: f32, // e.g. SOFA 0–24
+    pub ventilated: bool,
+    pub central_line: bool,
 }
 
 /// Coefficients for the Cox PH model (calibrated from HCUP NIS data).
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct CoxParams {
-    pub age_coef:       f32,  // per year above 65
-    pub cci_coef:       f32,  // per CCI point
-    pub severity_coef:  f32,  // per SOFA point
-    pub vent_coef:      f32,  // ventilated indicator
-    pub cline_coef:     f32,  // central-line indicator
+    pub age_coef: f32,      // per year above 65
+    pub cci_coef: f32,      // per CCI point
+    pub severity_coef: f32, // per SOFA point
+    pub vent_coef: f32,     // ventilated indicator
+    pub cline_coef: f32,    // central-line indicator
 }
 
 impl Default for CoxParams {
     fn default() -> Self {
         Self {
-            age_coef:      0.02,
-            cci_coef:      0.08,
+            age_coef: 0.02,
+            cci_coef: 0.08,
             severity_coef: 0.10,
-            vent_coef:     0.45,
-            cline_coef:    0.25,
+            vent_coef: 0.45,
+            cline_coef: 0.25,
         }
     }
 }
@@ -40,11 +40,11 @@ impl Default for CoxParams {
 /// Compute the Cox PH hazard ratio for a patient.
 /// HR > 1 → event sooner (shorter LOS); HR < 1 → event later.
 pub fn cox_hazard_ratio(cov: &CoxCovariates, params: &CoxParams) -> f32 {
-    let lp = params.age_coef      * (cov.age - 65.0)
-           + params.cci_coef      * cov.charlson_index
-           + params.severity_coef * cov.admission_severity
-           + params.vent_coef     * cov.ventilated as u8 as f32
-           + params.cline_coef    * cov.central_line as u8 as f32;
+    let lp = params.age_coef * (cov.age - 65.0)
+        + params.cci_coef * cov.charlson_index
+        + params.severity_coef * cov.admission_severity
+        + params.vent_coef * cov.ventilated as u8 as f32
+        + params.cline_coef * cov.central_line as u8 as f32;
     lp.exp()
 }
 
@@ -71,18 +71,27 @@ impl SurvivalDistribution {
 
     /// ICU LOS: Weibull(k=0.85, λ=120h).  Mean ≈ 128 h.  Source: SCCM.
     pub fn icu_los() -> Self {
-        Self::Weibull { shape: 0.85, scale: 120.0 }
+        Self::Weibull {
+            shape: 0.85,
+            scale: 120.0,
+        }
     }
 
     /// General ward LOS: LogNormal(μ=2.8, σ=0.9).  Mean ≈ 23 h.
     pub fn ward_los() -> Self {
-        Self::LogNormal { mu: 2.8, sigma: 0.9 }
+        Self::LogNormal {
+            mu: 2.8,
+            sigma: 0.9,
+        }
     }
 
     /// ED LOS for ESI-3 patients (NHAMCS): LogNormal(μ=0.90, σ=0.55).
     /// Mean ≈ 2.7 h.
     pub fn ed_los_esi3() -> Self {
-        Self::LogNormal { mu: 0.90, sigma: 0.55 }
+        Self::LogNormal {
+            mu: 0.90,
+            sigma: 0.55,
+        }
     }
 
     // ── Sampling ─────────────────────────────────────────────────────────────

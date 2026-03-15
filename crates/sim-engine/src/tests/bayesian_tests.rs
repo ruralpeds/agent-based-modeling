@@ -37,7 +37,8 @@ mod tests {
         assert!(
             err < 1e-4,
             "Fever positive update: got {:.6}, expected {:.6}",
-            belief.p_colonized, expected
+            belief.p_colonized,
+            expected
         );
     }
 
@@ -51,7 +52,12 @@ mod tests {
 
         let expected = posterior_positive(prior, lik.sensitivity, lik.specificity);
         let err = (belief.p_colonized - expected).abs();
-        assert!(err < 1e-4, "Culture positive update: got {:.6}, expected {:.6}", belief.p_colonized, expected);
+        assert!(
+            err < 1e-4,
+            "Culture positive update: got {:.6}, expected {:.6}",
+            belief.p_colonized,
+            expected
+        );
     }
 
     // ── Negative update ───────────────────────────────────────────────────────
@@ -66,7 +72,12 @@ mod tests {
 
         let expected = posterior_negative(prior, lik.sensitivity, lik.specificity);
         let err = (belief.p_colonized - expected).abs();
-        assert!(err < 1e-4, "Fever negative update: got {:.6}, expected {:.6}", belief.p_colonized, expected);
+        assert!(
+            err < 1e-4,
+            "Fever negative update: got {:.6}, expected {:.6}",
+            belief.p_colonized,
+            expected
+        );
     }
 
     // ── Sequential updates ────────────────────────────────────────────────────
@@ -96,7 +107,10 @@ mod tests {
         let mut belief = BayesianBeliefState::new(0.50, 0.40);
         belief.update_on_negative(ClinicalObservation::Fever);
         belief.update_on_negative(ClinicalObservation::AbnormalWbc);
-        assert!(belief.p_colonized < 0.50, "Negative observations should lower P(C)");
+        assert!(
+            belief.p_colonized < 0.50,
+            "Negative observations should lower P(C)"
+        );
     }
 
     // ── Decision thresholds ───────────────────────────────────────────────────
@@ -104,13 +118,19 @@ mod tests {
     #[test]
     fn isolation_threshold_triggers_correctly() {
         let mut belief = BayesianBeliefState::new_icu_default();
-        assert!(!belief.should_isolate(), "P=0.15 should not trigger isolation (threshold=0.40)");
+        assert!(
+            !belief.should_isolate(),
+            "P=0.15 should not trigger isolation (threshold=0.40)"
+        );
 
         // Multiple positive observations should push over threshold.
         for _ in 0..5 {
             belief.update_on_positive(ClinicalObservation::Fever);
         }
-        assert!(belief.should_isolate(), "High posterior should trigger isolation");
+        assert!(
+            belief.should_isolate(),
+            "High posterior should trigger isolation"
+        );
     }
 
     #[test]

@@ -6,7 +6,9 @@ pub struct Mulberry32 {
 
 impl Mulberry32 {
     pub fn new(seed: u32) -> Self {
-        Self { state: seed.wrapping_add(1) }
+        Self {
+            state: seed.wrapping_add(1),
+        }
     }
 
     pub fn next_u32(&mut self) -> u32 {

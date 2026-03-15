@@ -1,21 +1,21 @@
-use crate::engine::{Agent, AgentType, Grid};
-use crate::engine::agent::{AgentDecision, Action, Intention};
-use crate::engine::sim_engine::SimParams;
-use crate::spatial::SpatialGrid;
-use crate::rng::Mulberry32;
 use super::DecisionRule;
+use crate::engine::agent::{Action, AgentDecision, Intention};
+use crate::engine::sim_engine::SimParams;
+use crate::engine::{Agent, AgentType, Grid};
+use crate::rng::Mulberry32;
+use crate::spatial::SpatialGrid;
 
 pub struct ReactiveRules;
 
 impl DecisionRule for ReactiveRules {
     fn decide(
         &self,
-        agent:   &Agent,
-        agents:  &[Agent],
-        grid:    &Grid<f32>,
+        agent: &Agent,
+        agents: &[Agent],
+        grid: &Grid<f32>,
         spatial: &SpatialGrid,
-        params:  &SimParams,
-        rng:     &mut Mulberry32,
+        params: &SimParams,
+        rng: &mut Mulberry32,
     ) -> AgentDecision {
         if agent.agent_type == AgentType::Prey {
             decide_prey_reactive(agent, agents, grid, spatial, params, rng)
@@ -24,7 +24,9 @@ impl DecisionRule for ReactiveRules {
         }
     }
 
-    fn name(&self) -> &'static str { "Reactive" }
+    fn name(&self) -> &'static str {
+        "Reactive"
+    }
     fn pseudocode(&self) -> &'static str {
         "IF predator_near THEN flee\nELSE IF hungry AND grass_near THEN forage\nELSE wander"
     }
@@ -39,10 +41,11 @@ fn decide_prey_reactive(
     rng: &mut Mulberry32,
 ) -> AgentDecision {
     let vision = params.prey_vision;
-    let speed  = params.prey_speed;
+    let speed = params.prey_speed;
 
     // Check for nearby predators
-    let nearest_pred = spatial.nearest_of_type(agent.x, agent.y, vision, AgentType::Predator, agents);
+    let nearest_pred =
+        spatial.nearest_of_type(agent.x, agent.y, vision, AgentType::Predator, agents);
 
     if let Some((px, py, _)) = nearest_pred {
         // Flee away from predator
@@ -90,7 +93,7 @@ fn decide_predator_reactive(
     rng: &mut Mulberry32,
 ) -> AgentDecision {
     let vision = params.predator_vision;
-    let speed  = params.predator_speed;
+    let speed = params.predator_speed;
 
     // Hunt nearest prey
     let nearest_prey = spatial.nearest_of_type(agent.x, agent.y, vision, AgentType::Prey, agents);

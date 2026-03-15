@@ -20,48 +20,57 @@ use crate::stochastic::distributions::standard_normal;
 #[derive(Debug, Clone, Copy)]
 pub struct OrnsteinUhlenbeck {
     pub theta: f32,
-    pub mu:    f32,
+    pub mu: f32,
     pub sigma: f32,
 }
 
 impl OrnsteinUhlenbeck {
     /// WBC count in 10⁹/L (setpoint 7.5, mild physiological noise).
     pub fn wbc() -> Self {
-        Self { theta: 0.10, mu: 7.5, sigma: 0.30 }
+        Self {
+            theta: 0.10,
+            mu: 7.5,
+            sigma: 0.30,
+        }
     }
 
     /// Core body temperature in °C (setpoint 37.0 °C).
     pub fn temperature() -> Self {
-        Self { theta: 0.15, mu: 37.0, sigma: 0.05 }
+        Self {
+            theta: 0.15,
+            mu: 37.0,
+            sigma: 0.05,
+        }
     }
 
     /// Drug plasma concentration normalized to [0, 1] (setpoint 0 = cleared).
     /// Without dosing, concentration decays to 0; noise reflects assay variability.
     pub fn drug_concentration() -> Self {
-        Self { theta: 0.20, mu: 0.0, sigma: 0.02 }
+        Self {
+            theta: 0.20,
+            mu: 0.0,
+            sigma: 0.02,
+        }
     }
 
     /// Nurse shift fatigue (setpoint 0 = rested; slow reversion during shift).
     pub fn nurse_fatigue() -> Self {
-        Self { theta: 0.005, mu: 0.0, sigma: 0.01 }
+        Self {
+            theta: 0.005,
+            mu: 0.0,
+            sigma: 0.01,
+        }
     }
 
     /// Euler-Maruyama step.  `dt` is in ticks (1 tick = 1 simulation time unit).
     pub fn step(&self, x: f32, dt: f32, rng: &mut Mulberry32) -> f32 {
-        let drift     = self.theta * (self.mu - x) * dt;
+        let drift = self.theta * (self.mu - x) * dt;
         let diffusion = self.sigma * dt.sqrt() * standard_normal(rng);
         x + drift + diffusion
     }
 
     /// Step with hard clamp to a physiologically plausible interval [lo, hi].
-    pub fn step_clamped(
-        &self,
-        x: f32,
-        dt: f32,
-        lo: f32,
-        hi: f32,
-        rng: &mut Mulberry32,
-    ) -> f32 {
+    pub fn step_clamped(&self, x: f32, dt: f32, lo: f32, hi: f32, rng: &mut Mulberry32) -> f32 {
         self.step(x, dt, rng).clamp(lo, hi)
     }
 
@@ -90,12 +99,18 @@ pub struct OneCompartmentPk {
 impl OneCompartmentPk {
     /// Typical IV antibiotic (vancomycin-like) parameters.
     pub fn antibiotic_iv() -> Self {
-        Self { ke: 0.35, volume: 10.0 }
+        Self {
+            ke: 0.35,
+            volume: 10.0,
+        }
     }
 
     /// Oral antibiotic with ~60% bioavailability (approx as lower effective ke).
     pub fn antibiotic_oral() -> Self {
-        Self { ke: 0.18, volume: 15.0 }
+        Self {
+            ke: 0.18,
+            volume: 15.0,
+        }
     }
 
     /// Advance concentration by one time step `dt` (hours).

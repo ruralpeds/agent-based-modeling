@@ -1,3 +1,4 @@
+use super::super::agents::types::{TreatmentAction, N_TREATMENT_ACTIONS};
 /// Probabilistic BDI (pBDI) architecture for the physician agent.
 ///
 /// Belief state: discrete distribution over DiseaseState (7 states).
@@ -10,7 +11,6 @@
 ///   a commitment threshold — the physician keeps the current intention
 ///   unless EU gain exceeds `commitment_threshold`.
 use crate::stochastic::dtmc::DiseaseState;
-use super::super::agents::types::{TreatmentAction, N_TREATMENT_ACTIONS};
 
 // ─── LikelihoodTable ─────────────────────────────────────────────────────────
 
@@ -88,11 +88,11 @@ impl UtilityParams {
 #[derive(Debug, Clone)]
 pub struct PhysicianPBDI {
     /// Normalised probability distribution over 7 disease states.
-    pub belief_state:         [(DiseaseState, f32); 7],
-    pub likelihood:           LikelihoodTable,
-    pub utility:              UtilityParams,
+    pub belief_state: [(DiseaseState, f32); 7],
+    pub likelihood: LikelihoodTable,
+    pub utility: UtilityParams,
     /// Current committed intention.
-    pub current_intention:    TreatmentAction,
+    pub current_intention: TreatmentAction,
     /// Minimum EU gain required to switch intention (commitment inertia).
     pub commitment_threshold: f32,
 }
@@ -104,16 +104,16 @@ impl PhysicianPBDI {
         Self {
             belief_state: [
                 (DiseaseState::Susceptible, p),
-                (DiseaseState::Exposed,     p),
-                (DiseaseState::Colonized,   p),
-                (DiseaseState::Infected,    p),
-                (DiseaseState::Treated,     p),
-                (DiseaseState::Recovered,   p),
-                (DiseaseState::Dead,        0.0),
+                (DiseaseState::Exposed, p),
+                (DiseaseState::Colonized, p),
+                (DiseaseState::Infected, p),
+                (DiseaseState::Treated, p),
+                (DiseaseState::Recovered, p),
+                (DiseaseState::Dead, 0.0),
             ],
             likelihood,
             utility,
-            current_intention:    TreatmentAction::Observe,
+            current_intention: TreatmentAction::Observe,
             commitment_threshold: 0.5,
         }
     }
@@ -148,7 +148,9 @@ impl PhysicianPBDI {
         let mut eu = [0.0f32; N_TREATMENT_ACTIONS];
         for (action_idx, slot) in eu.iter_mut().enumerate() {
             let action = TreatmentAction::from_index(action_idx);
-            *slot = self.belief_state.iter()
+            *slot = self
+                .belief_state
+                .iter()
                 .map(|&(state, prob)| prob * self.utility.utility(state, action))
                 .sum();
         }
@@ -161,10 +163,16 @@ impl PhysicianPBDI {
         let eu = self.expected_utilities();
         let current_eu = eu[self.current_intention.as_index()];
 
-        let (best_idx, best_eu) = eu.iter().enumerate()
-            .fold((0, f32::NEG_INFINITY), |(bi, bv), (i, &v)| {
-                if v > bv { (i, v) } else { (bi, bv) }
-            });
+        let (best_idx, best_eu) =
+            eu.iter()
+                .enumerate()
+                .fold((0, f32::NEG_INFINITY), |(bi, bv), (i, &v)| {
+                    if v > bv {
+                        (i, v)
+                    } else {
+                        (bi, bv)
+                    }
+                });
 
         if best_eu - current_eu > self.commitment_threshold {
             self.current_intention = TreatmentAction::from_index(best_idx);
@@ -174,7 +182,8 @@ impl PhysicianPBDI {
 
     /// Return dominant disease state (highest probability).
     pub fn map_state(&self) -> DiseaseState {
-        self.belief_state.iter()
+        self.belief_state
+            .iter()
             .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
             .map(|&(s, _)| s)
             .unwrap_or(DiseaseState::Susceptible)

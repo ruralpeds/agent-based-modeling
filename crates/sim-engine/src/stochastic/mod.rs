@@ -1,21 +1,21 @@
+pub mod bayesian;
+pub mod ctmc;
 pub mod distributions;
 pub mod dtmc;
-pub mod ctmc;
-pub mod poisson;
-pub mod survival;
-pub mod bayesian;
-pub mod sde;
 pub mod monte_carlo;
+pub mod poisson;
+pub mod sde;
+pub mod survival;
 
 // Convenience re-exports used across Phase 2 agent modules.
+pub use bayesian::{BayesianBeliefState, ClinicalObservation, ObservationLikelihoods};
+pub use ctmc::{colonization_ctmc, CtmcTransition, GillespieSampler};
 pub use distributions::{
-    standard_normal, exponential_sample, log_normal_sample,
-    gamma_sample, beta_sample, categorical_draw, gamma_fn,
+    beta_sample, categorical_draw, exponential_sample, gamma_fn, gamma_sample, log_normal_sample,
+    standard_normal,
 };
-pub use dtmc::{DiseaseState, PatientDTMC, N_DISEASE_STATES, build_hai_dtmc_matrix};
-pub use ctmc::{CtmcTransition, GillespieSampler, colonization_ctmc};
+pub use dtmc::{build_hai_dtmc_matrix, DiseaseState, PatientDTMC, N_DISEASE_STATES};
+pub use monte_carlo::{antithetic_mean, antithetic_pair, monte_carlo_run, CrnManager};
 pub use poisson::NhppArrivalProcess;
-pub use survival::{SurvivalDistribution, CoxCovariates, CoxParams, cox_hazard_ratio};
-pub use bayesian::{ClinicalObservation, ObservationLikelihoods, BayesianBeliefState};
-pub use sde::{OrnsteinUhlenbeck, OneCompartmentPk};
-pub use monte_carlo::{CrnManager, antithetic_pair, antithetic_mean, monte_carlo_run};
+pub use sde::{OneCompartmentPk, OrnsteinUhlenbeck};
+pub use survival::{cox_hazard_ratio, CoxCovariates, CoxParams, SurvivalDistribution};

@@ -62,8 +62,11 @@ mod tests {
         // mean of [100, 50, 150] = 300/3 = 100
         let agents = vec![prey(100.0), prey(50.0), prey(150.0)];
         let s = compute_stats(&agents, 0);
-        assert!((s.mean_prey_energy - 100.0).abs() < 1e-4,
-            "mean_prey_energy = {}, expected 100.0", s.mean_prey_energy);
+        assert!(
+            (s.mean_prey_energy - 100.0).abs() < 1e-4,
+            "mean_prey_energy = {}, expected 100.0",
+            s.mean_prey_energy
+        );
     }
 
     #[test]
@@ -89,8 +92,11 @@ mod tests {
         // All same energy → perfect equality → gini = 0
         let agents = vec![prey(100.0), prey(100.0), prey(100.0)];
         let s = compute_stats(&agents, 0);
-        assert!((s.gini_energy - 0.0).abs() < 1e-5,
-            "gini = {}, expected 0.0 for equal energies", s.gini_energy);
+        assert!(
+            (s.gini_energy - 0.0).abs() < 1e-5,
+            "gini = {}, expected 0.0 for equal energies",
+            s.gini_energy
+        );
     }
 
     #[test]
@@ -106,8 +112,11 @@ mod tests {
         // sum = (2*2 - 2 - 1)*100 = 100; total=100; gini = 100/(2*100) = 0.5
         let agents = vec![prey(0.0), prey(100.0)];
         let s = compute_stats(&agents, 0);
-        assert!((s.gini_energy - 0.5).abs() < 1e-5,
-            "gini = {}, expected 0.5 for [0, 100]", s.gini_energy);
+        assert!(
+            (s.gini_energy - 0.5).abs() < 1e-5,
+            "gini = {}, expected 0.5 for [0, 100]",
+            s.gini_energy
+        );
     }
 
     #[test]
@@ -117,16 +126,23 @@ mod tests {
         let agents = vec![prey(0.0), prey(0.0), prey(100.0)];
         let s = compute_stats(&agents, 0);
         let expected = 200.0f32 / 300.0f32;
-        assert!((s.gini_energy - expected).abs() < 1e-4,
-            "gini = {}, expected {}", s.gini_energy, expected);
+        assert!(
+            (s.gini_energy - expected).abs() < 1e-4,
+            "gini = {}, expected {}",
+            s.gini_energy,
+            expected
+        );
     }
 
     #[test]
     fn gini_is_in_zero_to_one_range() {
         let agents = vec![prey(10.0), prey(200.0), pred(0.0), pred(150.0)];
         let s = compute_stats(&agents, 0);
-        assert!(s.gini_energy >= 0.0 && s.gini_energy <= 1.0,
-            "gini = {} out of [0,1]", s.gini_energy);
+        assert!(
+            s.gini_energy >= 0.0 && s.gini_energy <= 1.0,
+            "gini = {} out of [0,1]",
+            s.gini_energy
+        );
     }
 
     #[test]
@@ -138,29 +154,38 @@ mod tests {
     #[test]
     fn gini_monotone_more_unequal_produces_higher_gini() {
         // Equal distribution → gini = 0
-        let equal  = vec![prey(50.0), prey(50.0), prey(50.0), prey(50.0)];
-        let s_eq   = compute_stats(&equal, 0);
+        let equal = vec![prey(50.0), prey(50.0), prey(50.0), prey(50.0)];
+        let s_eq = compute_stats(&equal, 0);
         // Moderate inequality
         let moderate = vec![prey(25.0), prey(50.0), prey(75.0), prey(100.0)];
-        let s_mod    = compute_stats(&moderate, 0);
+        let s_mod = compute_stats(&moderate, 0);
         // Maximal inequality: one agent has everything
         let unequal = vec![prey(0.0), prey(0.0), prey(0.0), prey(200.0)];
-        let s_uneq  = compute_stats(&unequal, 0);
+        let s_uneq = compute_stats(&unequal, 0);
 
-        assert!(s_eq.gini_energy < s_mod.gini_energy,
+        assert!(
+            s_eq.gini_energy < s_mod.gini_energy,
             "equal ({:.4}) should have lower gini than moderate ({:.4})",
-            s_eq.gini_energy, s_mod.gini_energy);
-        assert!(s_mod.gini_energy < s_uneq.gini_energy,
+            s_eq.gini_energy,
+            s_mod.gini_energy
+        );
+        assert!(
+            s_mod.gini_energy < s_uneq.gini_energy,
             "moderate ({:.4}) should have lower gini than maximal ({:.4})",
-            s_mod.gini_energy, s_uneq.gini_energy);
+            s_mod.gini_energy,
+            s_uneq.gini_energy
+        );
     }
 
     #[test]
     fn gini_single_agent_is_zero() {
         let agents = vec![prey(150.0)];
         let s = compute_stats(&agents, 0);
-        assert!((s.gini_energy - 0.0).abs() < 1e-5,
-            "gini for single agent = {}", s.gini_energy);
+        assert!(
+            (s.gini_energy - 0.0).abs() < 1e-5,
+            "gini for single agent = {}",
+            s.gini_energy
+        );
     }
 
     // ── action_distribution ───────────────────────────────────────────────────
@@ -170,13 +195,16 @@ mod tests {
         use crate::engine::agent::Action;
         let agents = vec![
             prey_with_action(0, 100.0, Action::Wander),
-            prey_with_action(1, 80.0,  Action::Forage),
-            prey_with_action(2, 60.0,  Action::Flee),
+            prey_with_action(1, 80.0, Action::Forage),
+            prey_with_action(2, 60.0, Action::Flee),
         ];
         let s = compute_stats(&agents, 0);
         let total: f32 = s.action_dist.iter().sum();
-        assert!((total - 1.0).abs() < 1e-5,
-            "action_dist sum = {}, expected 1.0", total);
+        assert!(
+            (total - 1.0).abs() < 1e-5,
+            "action_dist sum = {}, expected 1.0",
+            total
+        );
     }
 
     #[test]
@@ -190,8 +218,12 @@ mod tests {
         // Wander is index 0; all others must be 0.0
         assert!((s.action_dist[0] - 1.0).abs() < 1e-5);
         for i in 1..7 {
-            assert!((s.action_dist[i] - 0.0).abs() < 1e-5,
-                "action_dist[{}] = {} expected 0.0", i, s.action_dist[i]);
+            assert!(
+                (s.action_dist[i] - 0.0).abs() < 1e-5,
+                "action_dist[{}] = {} expected 0.0",
+                i,
+                s.action_dist[i]
+            );
         }
     }
 
@@ -208,8 +240,8 @@ mod tests {
         let agents = vec![
             prey_with_action(0, 100.0, Action::Wander),
             prey_with_action(1, 100.0, Action::Wander),
-            prey_with_action(2, 80.0,  Action::Forage),
-            prey_with_action(3, 80.0,  Action::Forage),
+            prey_with_action(2, 80.0, Action::Forage),
+            prey_with_action(3, 80.0, Action::Forage),
         ];
         let s = compute_stats(&agents, 0);
         assert!((s.action_dist[0] - 0.5).abs() < 1e-5); // Wander

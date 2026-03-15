@@ -5,7 +5,7 @@
 #[cfg(test)]
 mod tests {
     use crate::rng::Mulberry32;
-    use crate::stochastic::ctmc::{GillespieSampler, CtmcTransition, colonization_ctmc};
+    use crate::stochastic::ctmc::{colonization_ctmc, CtmcTransition, GillespieSampler};
 
     // ── KS test against Exp(lambda) ───────────────────────────────────────────
 
@@ -18,7 +18,7 @@ mod tests {
         for (i, &t) in samples.iter().enumerate() {
             let f_emp_hi = (i + 1) as f32 / n;
             let f_emp_lo = i as f32 / n;
-            let f_theo   = 1.0 - (-lambda * t).exp();
+            let f_theo = 1.0 - (-lambda * t).exp();
             d_max = d_max.max((f_emp_hi - f_theo).abs());
             d_max = d_max.max((f_emp_lo - f_theo).abs());
         }
@@ -31,9 +31,11 @@ mod tests {
     fn ctmc_holding_time_ks_test() {
         let lambda = 2.0f32;
         // State 0 → State 1 with rate lambda; absorb at state 1.
-        let sampler = GillespieSampler::new(vec![
-            CtmcTransition { from: 0, to: 1, rate: lambda },
-        ]);
+        let sampler = GillespieSampler::new(vec![CtmcTransition {
+            from: 0,
+            to: 1,
+            rate: lambda,
+        }]);
         let mut rng = Mulberry32::new(42);
         let n = 5_000usize;
         let times: Vec<f32> = (0..n)
@@ -61,12 +63,28 @@ mod tests {
     #[test]
     fn total_rate_from_correct() {
         let sampler = GillespieSampler::new(vec![
-            CtmcTransition { from: 0, to: 1, rate: 1.5 },
-            CtmcTransition { from: 0, to: 2, rate: 2.5 },
-            CtmcTransition { from: 1, to: 0, rate: 0.8 },
+            CtmcTransition {
+                from: 0,
+                to: 1,
+                rate: 1.5,
+            },
+            CtmcTransition {
+                from: 0,
+                to: 2,
+                rate: 2.5,
+            },
+            CtmcTransition {
+                from: 1,
+                to: 0,
+                rate: 0.8,
+            },
         ]);
         let rel_err = (sampler.total_rate_from(0) - 4.0).abs();
-        assert!(rel_err < 1e-5, "total_rate_from(0) should be 4.0, got {}", sampler.total_rate_from(0));
+        assert!(
+            rel_err < 1e-5,
+            "total_rate_from(0) should be 4.0, got {}",
+            sampler.total_rate_from(0)
+        );
     }
 
     #[test]
@@ -74,15 +92,25 @@ mod tests {
         // Two competing transitions: 0→1 at rate 3, 0→2 at rate 1.
         // Expected P(→1) = 0.75, P(→2) = 0.25.
         let sampler = GillespieSampler::new(vec![
-            CtmcTransition { from: 0, to: 1, rate: 3.0 },
-            CtmcTransition { from: 0, to: 2, rate: 1.0 },
+            CtmcTransition {
+                from: 0,
+                to: 1,
+                rate: 3.0,
+            },
+            CtmcTransition {
+                from: 0,
+                to: 2,
+                rate: 1.0,
+            },
         ]);
         let mut rng = Mulberry32::new(9);
         let n = 20_000usize;
         let mut to_one = 0u32;
         for _ in 0..n {
             if let Some((_, dest)) = sampler.next_event(0, &mut rng) {
-                if dest == 1 { to_one += 1; }
+                if dest == 1 {
+                    to_one += 1;
+                }
             }
         }
         let p_one = to_one as f32 / n as f32;
@@ -95,7 +123,7 @@ mod tests {
     #[test]
     fn colonization_ctmc_runs_without_panic() {
         let mut ctmc = colonization_ctmc(0.10, 0.05);
-        let mut rng  = Mulberry32::new(3);
+        let mut rng = Mulberry32::new(3);
         let state = ctmc.run_to_time(0, 100.0, &mut rng);
         assert!(state == 0 || state == 1, "unexpected state {state}");
         // Set a custom rate

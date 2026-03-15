@@ -1,3 +1,5 @@
+use super::types::{AntibioticClass, ResistanceProfile};
+use crate::rng::Mulberry32;
 /// Pathogen module: dose-response transmission probability, resistance
 /// mutation events, and antibiotic efficacy look-up.
 ///
@@ -7,8 +9,6 @@
 /// Resistance escalation (Poisson per antibiotic-day):
 ///   P(mutation) = 1 − exp(−mu · antibiotic_days)
 use serde::{Deserialize, Serialize};
-use crate::rng::Mulberry32;
-use super::types::{ResistanceProfile, AntibioticClass};
 
 // ─── PathogenParams ───────────────────────────────────────────────────────────
 
@@ -27,8 +27,8 @@ pub struct PathogenParams {
 impl Default for PathogenParams {
     fn default() -> Self {
         Self {
-            dose_response_r:          0.05,
-            hand_wash_factor:         0.90,
+            dose_response_r: 0.05,
+            hand_wash_factor: 0.90,
             mutation_rate_per_ab_day: 0.002,
         }
     }
@@ -39,12 +39,10 @@ impl Default for PathogenParams {
 /// P(transmission) using exponential dose-response (Haas 1983).
 /// `dose` is the exposure inoculum (arbitrary units, ≥ 0).
 /// `hand_washed` blocks `hand_wash_factor` fraction of the dose.
-pub fn transmission_probability(
-    dose: f32,
-    hand_washed: bool,
-    params: &PathogenParams,
-) -> f32 {
-    if dose <= 0.0 { return 0.0; }
+pub fn transmission_probability(dose: f32, hand_washed: bool, params: &PathogenParams) -> f32 {
+    if dose <= 0.0 {
+        return 0.0;
+    }
     let effective_dose = if hand_washed {
         dose * (1.0 - params.hand_wash_factor)
     } else {
@@ -81,10 +79,10 @@ pub fn resistance_mutation_event(
 /// FullySusceptible → MethicillinR → VancomycinIntermediate → Pandrug.
 pub fn escalate_resistance(current: ResistanceProfile) -> ResistanceProfile {
     match current {
-        ResistanceProfile::FullySusceptible       => ResistanceProfile::MethicillinR,
-        ResistanceProfile::MethicillinR           => ResistanceProfile::VancomycinIntermediate,
+        ResistanceProfile::FullySusceptible => ResistanceProfile::MethicillinR,
+        ResistanceProfile::MethicillinR => ResistanceProfile::VancomycinIntermediate,
         ResistanceProfile::VancomycinIntermediate => ResistanceProfile::Pandrug,
-        ResistanceProfile::Pandrug                => ResistanceProfile::Pandrug,
+        ResistanceProfile::Pandrug => ResistanceProfile::Pandrug,
     }
 }
 
@@ -94,10 +92,14 @@ pub fn escalate_resistance(current: ResistanceProfile) -> ResistanceProfile {
 /// Returns 0.0 if resistant, 1.0 if fully susceptible, 0.5 for intermediate.
 pub fn antibiotic_efficacy(resistance: ResistanceProfile, antibiotic: AntibioticClass) -> f32 {
     match (resistance, antibiotic) {
-        (ResistanceProfile::FullySusceptible, _)  => 1.0,
-        (ResistanceProfile::Pandrug, _)           => 0.0,
+        (ResistanceProfile::FullySusceptible, _) => 1.0,
+        (ResistanceProfile::Pandrug, _) => 0.0,
         _ => {
-            if resistance.is_susceptible_to(antibiotic) { 1.0 } else { 0.0 }
+            if resistance.is_susceptible_to(antibiotic) {
+                1.0
+            } else {
+                0.0
+            }
         }
     }
 }

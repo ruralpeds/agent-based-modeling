@@ -1,11 +1,11 @@
-pub mod engine;
+pub mod agents;
 pub mod decision_rules;
-pub mod spatial;
+pub mod engine;
+pub mod hospital;
 pub mod rng;
+pub mod spatial;
 pub mod statistics;
 pub mod stochastic;
-pub mod agents;
-pub mod hospital;
 
 #[cfg(target_arch = "wasm32")]
 pub mod wasm_api;

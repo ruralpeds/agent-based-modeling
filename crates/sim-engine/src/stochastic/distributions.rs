@@ -104,9 +104,8 @@ pub fn gamma_fn(x: f32) -> f32 {
     }
     // Stirling's approximation for x ≥ 6
     let x64 = x as f64;
-    let ln_g = (x64 - 0.5) * x64.ln() - x64
-        + 0.5 * core::f64::consts::TAU.ln()
-        + 1.0 / (12.0 * x64)
-        - 1.0 / (360.0 * x64 * x64 * x64);
+    let ln_g =
+        (x64 - 0.5) * x64.ln() - x64 + 0.5 * core::f64::consts::TAU.ln() + 1.0 / (12.0 * x64)
+            - 1.0 / (360.0 * x64 * x64 * x64);
     ln_g.exp() as f32
 }

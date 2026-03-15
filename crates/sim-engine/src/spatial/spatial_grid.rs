@@ -1,10 +1,10 @@
 use crate::engine::{Agent, AgentType};
 
 pub struct SpatialGrid {
-    buckets:     Vec<Vec<usize>>,
+    buckets: Vec<Vec<usize>>,
     bucket_size: f32,
-    cols:        usize,
-    rows:        usize,
+    cols: usize,
+    rows: usize,
 }
 
 impl SpatialGrid {
@@ -20,7 +20,9 @@ impl SpatialGrid {
     }
 
     pub fn build(&mut self, agents: &[Agent]) {
-        for b in &mut self.buckets { b.clear(); }
+        for b in &mut self.buckets {
+            b.clear();
+        }
         for (i, agent) in agents.iter().enumerate() {
             let bx = ((agent.x / self.bucket_size) as usize).min(self.cols - 1);
             let by = ((agent.y / self.bucket_size) as usize).min(self.rows - 1);
@@ -31,7 +33,9 @@ impl SpatialGrid {
     /// Returns (x, y, id) of nearest agent of given type within radius
     pub fn nearest_of_type(
         &self,
-        cx: f32, cy: f32, radius: f32,
+        cx: f32,
+        cy: f32,
+        radius: f32,
         agent_type: AgentType,
         agents: &[Agent],
     ) -> Option<(f32, f32, u32)> {
@@ -42,19 +46,21 @@ impl SpatialGrid {
         let by1 = (((cy + radius) / self.bucket_size).ceil() as usize).min(self.rows - 1);
 
         let mut best_d2 = r2 + 1.0;
-        let mut best:   Option<(f32, f32, u32)> = None;
+        let mut best: Option<(f32, f32, u32)> = None;
 
         for by in by0..=by1 {
             for bx in bx0..=bx1 {
                 for &idx in &self.buckets[by * self.cols + bx] {
                     let a = &agents[idx];
-                    if a.agent_type != agent_type { continue; }
+                    if a.agent_type != agent_type {
+                        continue;
+                    }
                     let dx = a.x - cx;
                     let dy = a.y - cy;
                     let d2 = dx * dx + dy * dy;
                     if d2 < best_d2 {
                         best_d2 = d2;
-                        best    = Some((a.x, a.y, a.id));
+                        best = Some((a.x, a.y, a.id));
                     }
                 }
             }
@@ -65,7 +71,9 @@ impl SpatialGrid {
     /// Returns all agents within radius as (x, y, id, type)
     pub fn query_radius(
         &self,
-        cx: f32, cy: f32, radius: f32,
+        cx: f32,
+        cy: f32,
+        radius: f32,
         agents: &[Agent],
     ) -> Vec<(f32, f32, u32, AgentType)> {
         let r2 = radius * radius;

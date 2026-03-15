@@ -40,18 +40,30 @@ impl ObservationLikelihoods {
     /// Evidence-based defaults.  Sources: Bates et al. (JAMA), NHSN criteria.
     pub fn for_observation(obs: ClinicalObservation) -> Self {
         match obs {
-            ClinicalObservation::Fever =>
-                Self { sensitivity: 0.60, specificity: 0.75 },
-            ClinicalObservation::PositiveCulture =>
-                Self { sensitivity: 0.85, specificity: 0.97 },
-            ClinicalObservation::AbnormalWbc =>
-                Self { sensitivity: 0.55, specificity: 0.68 },
-            ClinicalObservation::PurulentDrainage =>
-                Self { sensitivity: 0.45, specificity: 0.92 },
-            ClinicalObservation::Erythema =>
-                Self { sensitivity: 0.38, specificity: 0.88 },
-            ClinicalObservation::IncreasedVentSupport =>
-                Self { sensitivity: 0.50, specificity: 0.80 },
+            ClinicalObservation::Fever => Self {
+                sensitivity: 0.60,
+                specificity: 0.75,
+            },
+            ClinicalObservation::PositiveCulture => Self {
+                sensitivity: 0.85,
+                specificity: 0.97,
+            },
+            ClinicalObservation::AbnormalWbc => Self {
+                sensitivity: 0.55,
+                specificity: 0.68,
+            },
+            ClinicalObservation::PurulentDrainage => Self {
+                sensitivity: 0.45,
+                specificity: 0.92,
+            },
+            ClinicalObservation::Erythema => Self {
+                sensitivity: 0.38,
+                specificity: 0.88,
+            },
+            ClinicalObservation::IncreasedVentSupport => Self {
+                sensitivity: 0.50,
+                specificity: 0.80,
+            },
         }
     }
 }
@@ -79,18 +91,18 @@ impl BayesianBeliefState {
     /// Create with the NHSN ICU admission colonization prevalence (~15%).
     pub fn new_icu_default() -> Self {
         Self {
-            p_colonized:         0.15,
+            p_colonized: 0.15,
             isolation_threshold: 0.40,
-            culture_threshold:   0.24,
+            culture_threshold: 0.24,
         }
     }
 
     /// Create with an explicit prior and isolation threshold.
     pub fn new(p_colonized: f32, isolation_threshold: f32) -> Self {
         Self {
-            p_colonized:         p_colonized.clamp(1e-3, 1.0 - 1e-3),
+            p_colonized: p_colonized.clamp(1e-3, 1.0 - 1e-3),
             isolation_threshold,
-            culture_threshold:   isolation_threshold * 0.60,
+            culture_threshold: isolation_threshold * 0.60,
         }
     }
 
@@ -118,9 +130,9 @@ impl BayesianBeliefState {
     }
 
     fn apply_likelihood(&mut self, p_obs_given_c: f32, p_obs_given_nc: f32) {
-        let p  = self.p_colonized;
-        let num = p_obs_given_c  * p;
-        let den = p_obs_given_c  * p + p_obs_given_nc * (1.0 - p);
+        let p = self.p_colonized;
+        let num = p_obs_given_c * p;
+        let den = p_obs_given_c * p + p_obs_given_nc * (1.0 - p);
         if den > 1e-8 {
             self.p_colonized = (num / den).clamp(1e-4, 1.0 - 1e-4);
         }

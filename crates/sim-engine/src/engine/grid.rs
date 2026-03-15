@@ -2,17 +2,19 @@ use crate::rng::Mulberry32;
 
 /// 2D resource grid (grass for prey to eat)
 pub struct Grid<T> {
-    pub width:  usize,
+    pub width: usize,
     pub height: usize,
-    pub data:   Vec<T>,
+    pub data: Vec<T>,
 }
 
 impl Grid<f32> {
     pub fn new_grass(width: usize, height: usize, rng: &mut Mulberry32) -> Self {
-        let data = (0..width * height)
-            .map(|_| rng.next_f32())
-            .collect();
-        Self { width, height, data }
+        let data = (0..width * height).map(|_| rng.next_f32()).collect();
+        Self {
+            width,
+            height,
+            data,
+        }
     }
 
     #[inline]

@@ -1,3 +1,4 @@
+use super::super::agents::types::{AntibioticClass, N_ANTIBIOTIC_CLASSES};
 /// Thompson Sampling for antibiotic selection (Beta-Bernoulli bandit).
 ///
 /// Each antibiotic arm maintains a Beta(α, β) posterior over its
@@ -10,7 +11,6 @@
 ///   failure: β += 1
 use crate::rng::Mulberry32;
 use crate::stochastic::distributions::beta_sample;
-use super::super::agents::types::{AntibioticClass, N_ANTIBIOTIC_CLASSES};
 
 // ─── ThompsonAntibiotic ───────────────────────────────────────────────────────
 
@@ -21,13 +21,17 @@ pub struct ThompsonAntibiotic {
     /// Pseudo-successes (α > 0).
     pub alpha: f32,
     /// Pseudo-failures  (β > 0).
-    pub beta:  f32,
+    pub beta: f32,
 }
 
 impl ThompsonAntibiotic {
     pub fn new(antibiotic: AntibioticClass) -> Self {
         // Uninformative Beta(1,1) = Uniform[0,1]
-        Self { antibiotic, alpha: 1.0, beta: 1.0 }
+        Self {
+            antibiotic,
+            alpha: 1.0,
+            beta: 1.0,
+        }
     }
 
     /// Posterior mean efficacy estimate.
@@ -42,7 +46,11 @@ impl ThompsonAntibiotic {
 
     /// Update posterior after observing treatment outcome.
     pub fn update(&mut self, success: bool) {
-        if success { self.alpha += 1.0; } else { self.beta += 1.0; }
+        if success {
+            self.alpha += 1.0;
+        } else {
+            self.beta += 1.0;
+        }
     }
 }
 
@@ -76,7 +84,7 @@ impl AntibioticBandit {
             let s = arm.sample_efficacy(rng);
             if s > best_sample {
                 best_sample = s;
-                best_class  = arm.antibiotic;
+                best_class = arm.antibiotic;
             }
         }
         best_class
@@ -104,5 +112,7 @@ impl AntibioticBandit {
 }
 
 impl Default for AntibioticBandit {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
