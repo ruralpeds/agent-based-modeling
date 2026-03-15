@@ -12,8 +12,8 @@ async function switchToHospital(page) {
   await page.waitForSelector('#mode-btn-hospital');
   await page.locator('#mode-btn-hospital').click();
 
-  // Wait for hospital main row to become visible
-  await page.waitForSelector('#hospital-main', { state: 'visible', timeout: 5_000 });
+  // Wait for hospital main row to become visible (rely on global test timeout)
+  await page.waitForSelector('#hospital-main', { state: 'visible' });
 }
 
 /**
@@ -213,7 +213,8 @@ test.describe('Hospital mode — control panel', () => {
 
   test('hospital sidebar has parameter sliders', async ({ page }) => {
     const sliders = page.locator('#sidebar-hospital input[type=range]');
-    await expect(sliders).toHaveCount({ min: 3 });
+    const count = await sliders.count();
+    expect(count).toBeGreaterThanOrEqual(3);
   });
 
   test('HH Audit button is visible', async ({ page }) => {

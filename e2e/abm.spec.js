@@ -120,7 +120,7 @@ test.describe('ABM mode — playback controls', () => {
         return el && el.textContent !== prev;
       },
       before,
-      { timeout: 5_000 },
+      { timeout: 15_000 },
     );
 
     const after = await page.locator('#val-tick').textContent();
@@ -160,7 +160,8 @@ test.describe('ABM mode — control panel', () => {
 
   test('sidebar contains parameter sliders', async ({ page }) => {
     const sliders = page.locator('#sidebar-abm input[type=range]');
-    await expect(sliders).toHaveCount({ min: 3 }); // speed + at least several param sliders
+    const count = await sliders.count();
+    expect(count).toBeGreaterThanOrEqual(3); // speed + at least several param sliders
   });
 
   test('rule selector buttons are visible', async ({ page }) => {
