@@ -31,9 +31,11 @@ mod tests {
             t += d;
         }
 
-        // Expected mean inter-arrival = tph / base_rate = 12 / 4 = 3 ticks.
+        // The discrete-time mean inter-arrival accounts for ceil() discretization.
+        // For Exp(λ_per_tick), E[ceil(X)] = 1 / (1 - exp(-λ_per_tick)).
+        let lambda_per_tick = base_rate / tph as f32;
         let mean_delta = deltas.iter().sum::<u64>() as f32 / n as f32;
-        let expected   = tph as f32 / base_rate;
+        let expected   = 1.0 / (1.0 - (-lambda_per_tick).exp()); // ~3.53 for λ=1/3
         let rel_err    = (mean_delta - expected).abs() / expected;
         assert!(
             rel_err < 0.05,

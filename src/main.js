@@ -49,5 +49,5 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error('[ABM] Fatal error:', err);
+  logger.error('main', 'Fatal unhandled error:', err);
 });

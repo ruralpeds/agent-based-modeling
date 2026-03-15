@@ -8,10 +8,18 @@ use crate::rng::Mulberry32;
 mod reactive;
 mod bounded;
 mod bdi;
+pub mod prospect_theory;
+pub mod thompson_sampling;
+pub mod social_learning;
+pub mod pbdi;
 
 pub use reactive::ReactiveRules;
 pub use bounded::BoundedRationalityRules;
 pub use bdi::BdiRules;
+pub use prospect_theory::ProspectTheoryParams;
+pub use thompson_sampling::{ThompsonAntibiotic, AntibioticBandit};
+pub use social_learning::{SocialLearningParams, social_learning_step, social_learning_from_mean};
+pub use pbdi::{LikelihoodTable, UtilityParams, PhysicianPBDI};
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

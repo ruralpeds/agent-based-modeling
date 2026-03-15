@@ -16,7 +16,8 @@ export class PopulationChart extends ChartBase {
     super(container);
     ABMDispatch.on('sim:tick.popchart', (d) => {
       if (!d.stats) return;
-      const s = JSON.parse(d.stats);
+      let s;
+      try { s = JSON.parse(d.stats); } catch { return; }
       this.#preyData.push({ tick: s.tick, v: s.preyCount });
       this.#predData.push({ tick: s.tick, v: s.predCount });
       if (this.#preyData.length > MAX_HISTORY) {

@@ -23,8 +23,11 @@ mod tests {
         ]
     }
 
-    // Analytic stationary distribution (computed offline, verified by hand).
-    const PI: [f32; 3] = [0.4054, 0.2432, 0.3514];
+    // Analytic stationary distribution, solved from π P = π, Σπᵢ = 1:
+    //   π₀ = 23/43 ≈ 0.5349
+    //   π₁ = 11/43 ≈ 0.2558
+    //   π₂ =  9/43 ≈ 0.2093
+    const PI: [f32; 3] = [0.5349, 0.2558, 0.2093];
 
     #[test]
     fn stationary_distribution_convergence() {

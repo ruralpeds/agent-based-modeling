@@ -2,40 +2,46 @@
   "name": "abm-wasm-simulator",
   "version": "0.1.0",
   "type": "module",
-  "engines": { "node": ">=20.0.0" },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "dev":      "concurrently \"cargo watch -C crates/sim-engine -s 'wasm-pack build --target web --out-dir ../../pkg --dev'\" \"vite\"",
+    "dev": "concurrently \"cargo watch -C crates/sim-engine -s 'wasm-pack build --target web --out-dir ../../pkg --dev'\" \"vite\"",
     "build:wasm": "wasm-pack build crates/sim-engine --target web --out-dir pkg --release",
-    "build":    "npm run build:wasm && vite build",
-    "preview":  "vite preview",
-    "test":     "vitest run",
+    "build": "npm run build:wasm && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "ci":       "npm run build && npm run test",
-    "lint":     "eslint src --ext .js",
-    "fmt":      "prettier --write src"
+    "ci": "npm run build && npm run test",
+    "lint": "eslint src --ext .js",
+    "fmt": "prettier --write src"
   },
   "dependencies": {
+    "d3-array": "^3.2.4",
+    "d3-axis": "^3.0.0",
+    "d3-brush": "^3.0.0",
+    "d3-color": "^3.1.0",
     "d3-dispatch": "^3.0.1",
-    "d3-scale":    "^4.0.2",
-    "d3-selection": "^3.0.0",
-    "d3-shape":    "^3.2.0",
-    "d3-timer":    "^3.0.1",
-    "d3-zoom":     "^3.0.0",
-    "d3-axis":     "^3.0.0",
-    "d3-array":    "^3.2.4",
-    "d3-transition": "^3.0.1",
-    "d3-color":    "^3.1.0",
+    "d3-drag": "^3.0.0",
     "d3-interpolate": "^3.0.1",
-    "d3-brush":    "^3.0.0",
-    "d3-drag":     "^3.0.0"
+    "d3-scale": "^4.0.2",
+    "d3-selection": "^3.0.0",
+    "d3-shape": "^3.2.0",
+    "d3-timer": "^3.0.1",
+    "d3-transition": "^3.0.1",
+    "d3-zoom": "^3.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-wasm": "^6.2.2",
-    "concurrently":        "^8.2.2",
-    "eslint":              "^8.57.0",
-    "playwright":          "^1.42.0",
-    "prettier":            "^3.2.5",
-    "vite":                "^5.2.0",
-    "vitest":              "^1.4.0"
+    "@vitest/coverage-v8": "^1.4.0",
+    "jsdom": "^27.0.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "playwright": "^1.42.0",
+    "prettier": "^3.2.5",
+    "vite": "^5.2.0",
+    "vitest": "^1.4.0"
   }
 }

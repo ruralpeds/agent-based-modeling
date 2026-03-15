@@ -5,3 +5,6 @@ mod ctmc_tests;
 mod survival_tests;
 mod bayesian_tests;
 mod poisson_tests;
+mod stats_tests;
+mod spatial_tests;
+mod agents_tests;

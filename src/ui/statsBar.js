@@ -15,7 +15,8 @@ export function buildStatsBar(container) {
   let frameCount = 0;
 
   ABMDispatch.on('sim:tick.statsbar', (d) => {
-    const stats = d.stats ? JSON.parse(d.stats) : null;
+    let stats = null;
+    if (d.stats) { try { stats = JSON.parse(d.stats); } catch { /* malformed — skip */ } }
     select('#val-tick').text(fmtTick(d.tick));
     if (stats) {
       select('#val-prey').text(fmtCount(stats.preyCount));
