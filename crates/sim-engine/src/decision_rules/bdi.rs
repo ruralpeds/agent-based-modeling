@@ -9,16 +9,16 @@ use super::DecisionRule;
 /// Beliefs: what agent knows about environment
 /// Desires: agent's goals ranked by priority
 /// Intentions: committed plan based on beliefs + desires
+#[derive(Default)]
 pub struct BdiRules {
     // Per-instance state would go here (but for simplicity, stateless)
 }
 
 impl BdiRules {
-    pub fn new() -> Self {
-        Self {}
-    }
+    pub fn new() -> Self { Self::default() }
 }
 
+#[allow(dead_code)]
 struct Beliefs {
     nearest_pred:   Option<(f32, f32, u32)>,
     nearest_prey:   Option<(f32, f32, u32)>,

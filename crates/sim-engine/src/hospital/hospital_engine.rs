@@ -15,7 +15,6 @@
 /// 11. SPRT outbreak detection update.
 /// 12. Periodic social learning for providers.
 /// 13. Write SoA patient buffer.
-
 use crate::rng::Mulberry32;
 use crate::stochastic::dtmc::{PatientDTMC, DiseaseState, build_hai_dtmc_matrix};
 use crate::stochastic::sde::{OrnsteinUhlenbeck, OneCompartmentPk};
@@ -27,7 +26,7 @@ use crate::agents::bed_agent::BedAgent;
 use crate::agents::physician_agent::PhysicianAgent;
 use crate::agents::infection_control::{InfectionControlAgent, SprtDecision};
 use crate::agents::pathogen::{
-    transmission_event, resistance_mutation_event, escalate_resistance, PathogenParams,
+    transmission_event, resistance_mutation_event, escalate_resistance,
 };
 use crate::agents::types::TreatmentAction;
 use crate::decision_rules::social_learning::{SocialLearningParams, social_learning_from_mean};
@@ -50,7 +49,9 @@ pub struct HospitalSimEngine {
     dtmc:              PatientDTMC,
     dtmc_matrix:       Vec<f32>,
     arriv_process:     NhppArrivalProcess,
+    #[allow(dead_code)]
     wbc_ou:            OrnsteinUhlenbeck,
+    #[allow(dead_code)]
     temp_ou:           OrnsteinUhlenbeck,
     pk:                OneCompartmentPk,
     social_params:     SocialLearningParams,
@@ -94,9 +95,9 @@ impl HospitalSimEngine {
 
         // Nurse roster: spread across beds.
         let n_beds = params.icu_beds + params.ward_beds;
-        let mut nurses: Vec<NurseAgent> = (0..params.n_nurses)
+        let nurses: Vec<NurseAgent> = (0..params.n_nurses)
             .map(|i| {
-                let room = ((i as u16) % n_beds.max(1) as u16);
+                let room = (i as u16) % n_beds.max(1) as u16;
                 let compliance = 0.55 + rng.next_f32() * 0.30; // 55–85%
                 NurseAgent::new(i as u32, compliance, room, &mut rng)
             })
@@ -180,7 +181,7 @@ impl HospitalSimEngine {
         self.update_sprt();
 
         // 12. Social learning ─────────────────────────────────────────────────
-        if self.tick % self.params.social_learning_period as u64 == 0 {
+        if self.tick.is_multiple_of(self.params.social_learning_period as u64) {
             self.run_social_learning();
         }
 

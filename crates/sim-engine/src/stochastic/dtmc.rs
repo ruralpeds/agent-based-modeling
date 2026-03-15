@@ -99,6 +99,7 @@ impl PatientDTMC {
 /// - `theta`    — late mortality       Recovered → Dead
 ///
 /// Rows are renormalized to sum to 1 to absorb floating-point drift.
+#[allow(clippy::too_many_arguments)]
 pub fn build_hai_dtmc_matrix(
     lambda:  f32,
     alpha:   f32,

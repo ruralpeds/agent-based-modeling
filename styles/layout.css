@@ -58,3 +58,44 @@
   padding: 0.5rem;
   flex-shrink: 0;
 }
+
+/* ── Mode toggle bar ─────────────────────────────────────────────────────── */
+.mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.mode-bar .btn { font-size: 12px; }
+.mode-bar .btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ── Hospital chart panel: 4 stacked sub-charts ─────────────────────────── */
+.hospital-chart-panel {
+  width: 280px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow-y: hidden;
+}
+.hospital-sub-chart {
+  flex: 1;
+  min-height: 0;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+.hospital-sub-chart:last-child { border-bottom: none; }
+
+/* Viewport for hospital canvas */
+#viewport-hospital {
+  background: #0f172a;
+}

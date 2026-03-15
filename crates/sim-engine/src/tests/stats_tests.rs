@@ -135,6 +135,34 @@ mod tests {
         assert!((s.gini_energy - 0.0).abs() < 1e-5);
     }
 
+    #[test]
+    fn gini_monotone_more_unequal_produces_higher_gini() {
+        // Equal distribution → gini = 0
+        let equal  = vec![prey(50.0), prey(50.0), prey(50.0), prey(50.0)];
+        let s_eq   = compute_stats(&equal, 0);
+        // Moderate inequality
+        let moderate = vec![prey(25.0), prey(50.0), prey(75.0), prey(100.0)];
+        let s_mod    = compute_stats(&moderate, 0);
+        // Maximal inequality: one agent has everything
+        let unequal = vec![prey(0.0), prey(0.0), prey(0.0), prey(200.0)];
+        let s_uneq  = compute_stats(&unequal, 0);
+
+        assert!(s_eq.gini_energy < s_mod.gini_energy,
+            "equal ({:.4}) should have lower gini than moderate ({:.4})",
+            s_eq.gini_energy, s_mod.gini_energy);
+        assert!(s_mod.gini_energy < s_uneq.gini_energy,
+            "moderate ({:.4}) should have lower gini than maximal ({:.4})",
+            s_mod.gini_energy, s_uneq.gini_energy);
+    }
+
+    #[test]
+    fn gini_single_agent_is_zero() {
+        let agents = vec![prey(150.0)];
+        let s = compute_stats(&agents, 0);
+        assert!((s.gini_energy - 0.0).abs() < 1e-5,
+            "gini for single agent = {}", s.gini_energy);
+    }
+
     // ── action_distribution ───────────────────────────────────────────────────
 
     #[test]

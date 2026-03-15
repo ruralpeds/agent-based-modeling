@@ -13,6 +13,7 @@ import { dispatch } from 'd3-dispatch';
  *   ui:resize   — {}
  */
 export const ABMDispatch = dispatch(
+  // ABM predator-prey events
   'sim:tick',
   'sim:reset',
   'sim:start',
@@ -21,4 +22,10 @@ export const ABMDispatch = dispatch(
   'agent:select',
   'engine:error',
   'ui:resize',
+  // Hospital simulation events
+  'hospital:tick',
+  'hospital:reset',
+  'hospital:start',
+  'hospital:pause',
+  'hospital:outbreak',
 );

@@ -1,9 +1,9 @@
-/// Bayesian belief-state update for patient colonization probability.
-/// Provider agents maintain a Beta posterior that is revised as clinical
-/// observations arrive (Bayes' theorem with binary likelihood).
-///
-/// Evidence-based sensitivity/specificity values are from published HAI
-/// diagnostic studies (referenced inline).
+//! Bayesian belief-state update for patient colonization probability.
+//! Provider agents maintain a Beta posterior that is revised as clinical
+//! observations arrive (Bayes' theorem with binary likelihood).
+//!
+//! Evidence-based sensitivity/specificity values are from published HAI
+//! diagnostic studies (referenced inline).
 
 // ─── Clinical observations ────────────────────────────────────────────────────
 
