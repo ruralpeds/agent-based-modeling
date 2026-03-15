@@ -1,0 +1,26 @@
+.chart-panel svg text {
+  fill: var(--text-muted);
+}
+
+.chart-panel .domain, .chart-panel .tick line {
+  stroke: var(--border-2);
+}
+
+.chart-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 4px 0 2px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chart-container {
+  height: 160px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-panel-2);
+  overflow: hidden;
+}

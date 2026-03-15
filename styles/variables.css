@@ -1,0 +1,18 @@
+:root {
+  --bg:           #0f172a;
+  --bg-panel:     #0f172a;
+  --bg-panel-2:   #1e293b;
+  --border:       #1e293b;
+  --border-2:     #334155;
+  --text:         #e2e8f0;
+  --text-muted:   #94a3b8;
+  --accent:       #3b82f6;
+  --accent-hover: #2563eb;
+  --prey:         #22c55e;
+  --predator:     #ef4444;
+  --warning:      #f97316;
+  --success:      #22c55e;
+  --radius:       6px;
+  --font:         'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+}

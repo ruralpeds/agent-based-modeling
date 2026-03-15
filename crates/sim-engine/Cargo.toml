@@ -1,0 +1,35 @@
+[package]
+name = "sim-engine"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.93"
+js-sys        = "0.3.70"
+serde         = { version = "1.0", features = ["derive"] }
+serde_json    = "1.0"
+console_error_panic_hook = "0.1.7"
+
+[dependencies.web-sys]
+version  = "0.3.70"
+features = ["console"]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.43"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "bench"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1
