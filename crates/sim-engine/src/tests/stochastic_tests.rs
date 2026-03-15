@@ -109,6 +109,35 @@ mod tests {
         assert!(rel_err < 0.05, "Gamma(0.5,1) mean = {mean:.4}, expected {expected:.4}");
     }
 
+    // ── Mulberry32 signed range ───────────────────────────────────────────────
+
+    #[test]
+    fn mulberry32_signed_range() {
+        // next_f32_signed should return values in [-1, 1).
+        let n = 100_000usize;
+        let mut rng = Mulberry32::new(37);
+        let mut saw_negative = false;
+        let mut saw_positive = false;
+        for _ in 0..n {
+            let v = rng.next_f32_signed();
+            assert!(v >= -1.0 && v < 1.0, "next_f32_signed out of [-1, 1): {v}");
+            if v < 0.0 { saw_negative = true; }
+            if v > 0.0 { saw_positive = true; }
+        }
+        assert!(saw_negative, "never sampled a negative value in 100k draws");
+        assert!(saw_positive, "never sampled a positive value in 100k draws");
+    }
+
+    #[test]
+    fn mulberry32_signed_mean_near_zero() {
+        // Signed samples are symmetric around 0 — mean should be ≈ 0.
+        let n = 100_000usize;
+        let mut rng = Mulberry32::new(41);
+        let mean: f32 = (0..n).map(|_| rng.next_f32_signed()).sum::<f32>() / n as f32;
+        assert!(mean.abs() < 0.02,
+            "next_f32_signed mean = {mean:.4}, expected ≈ 0.0");
+    }
+
     // ── Beta sanity checks ────────────────────────────────────────────────────
 
     #[test]
