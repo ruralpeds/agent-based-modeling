@@ -114,7 +114,9 @@ print_run_summary() {
   created=$(echo "$run_info"  | jq -r '.created')
 
   hr
-  printf "${BOLD}Run #%s${RESET}  %s\n" "$run_id" "$(status_icon "$conclusion")  ${BOLD}${conclusion^^}${RESET}"
+  local conclusion_upper
+  conclusion_upper=$(echo "$conclusion" | tr '[:lower:]' '[:upper:]')
+  printf "${BOLD}Run #%s${RESET}  %s\n" "$run_id" "$(status_icon "$conclusion")  ${BOLD}${conclusion_upper}${RESET}"
   printf "  Workflow : %s\n" "$workflow"
   printf "  Branch   : %s  (%s)\n" "$branch" "$sha"
   printf "  Title    : %s\n" "$title"

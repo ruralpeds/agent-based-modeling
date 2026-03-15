@@ -146,13 +146,11 @@ impl PhysicianPBDI {
     /// Compute expected utility of each TreatmentAction under current beliefs.
     fn expected_utilities(&self) -> [f32; N_TREATMENT_ACTIONS] {
         let mut eu = [0.0f32; N_TREATMENT_ACTIONS];
-        for action_idx in 0..N_TREATMENT_ACTIONS {
+        for (action_idx, slot) in eu.iter_mut().enumerate() {
             let action = TreatmentAction::from_index(action_idx);
-            let mut sum = 0.0f32;
-            for &(state, prob) in &self.belief_state {
-                sum += prob * self.utility.utility(state, action);
-            }
-            eu[action_idx] = sum;
+            *slot = self.belief_state.iter()
+                .map(|&(state, prob)| prob * self.utility.utility(state, action))
+                .sum();
         }
         eu
     }
