@@ -1,0 +1,8 @@
+# Standard Security Filter for RuralPeds
+.env*
+*.key
+*.pem
+secrets/
+private/
+.ssh/
+config/local.yaml

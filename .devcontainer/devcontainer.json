@@ -1,5 +1,5 @@
 {
-  "name": "RuralPeds Rust Dev",
+  "name": "RuralPeds Hardened Rust Dev",
   "build": {
     "dockerfile": "Dockerfile.dev",
     "context": ".."
@@ -8,9 +8,15 @@
     "--init"
   ],
   "remoteUser": "vscode",
+  // HARDENED: The workspace is stored in a named volume, not a host bind-mount.
+  // This prevents the container/agent from ever touching your host OS files.
+  "workspaceFolder": "/workspaces/agent-based-modeling",
+  "workspaceMount": "source=agent-based-modeling-workspace,target=/workspaces/agent-based-modeling,type=volume",
   "mounts": [
-    "source=${localEnv:HOME}/.cargo/registry,target=/usr/local/cargo/registry,type=bind,consistency=cached",
-    "source=${localWorkspaceFolderBasename}-target,target=${containerWorkspaceFolder}/target,type=volume"
+    // Persist cargo registry for faster builds across different projects
+    "source=ruralpeds-cargo-registry,target=/usr/local/cargo/registry,type=bind,consistency=cached",
+    // Project-specific build artifacts volume
+    "source=agent-based-modeling-target,target=/workspaces/agent-based-modeling/target,type=volume"
   ],
   "containerEnv": {
     "CARGO_HOME": "/usr/local/cargo",
@@ -19,9 +25,7 @@
     "RUST_LOG": "info"
   },
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
-    },
+    "ghcr.io/devcontainers/features/node:20": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
